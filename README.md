@@ -103,7 +103,7 @@ Legend:
 
 ## 📝 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is NOT licensed and any use of the code is prohibited for commercial purposes.
 
 ## 🙏 Acknowledgments
 
