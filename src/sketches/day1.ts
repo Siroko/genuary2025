@@ -1,4 +1,4 @@
-import { BoxGeometry, Camera, Material, Renderable, Renderer, Scene } from "kansei";
+import { Camera, Material, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
 
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
 const camera: Camera = new Camera(45, 0.1, 100, window.innerWidth / window.innerHeight);
@@ -41,37 +41,28 @@ const material: Material =new Material(/* wgsl */`
     @fragment
     fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     {
-        var pointLight = vec3<f32>(100.0, 50.0, 0.0);
-        var lightVector = pointLight;
-        var lightDirection = normalize(lightVector);
-        var surfaceColor = vec3<f32>(0.967, 0.8321, 0.837);
-        var fogColor = vec3<f32>(0.1);
-        var diffuse = (dot(fragData.normal, lightDirection) + 1.0) / 2.0;
-        var halfLambertDiffuse = (diffuse * 0.5 + 0.5) * surfaceColor;
-        halfLambertDiffuse = mix(halfLambertDiffuse, fogColor,  smoothstep(0.0, 1.0, abs(fragData.viewPosition.z / 1000.0)));
-        return vec4<f32>(halfLambertDiffuse, 1.0);
+        return vec4<f32>(1.0, 1.0, 1.0, 1.0);
     }`,
     {
         bindings: [],
     }
 );
 
-const geometry: BoxGeometry = new BoxGeometry(1, 1, 1);
-
-let cube: Renderable;
+const geometry: PlaneGeometry = new PlaneGeometry(1, 1);
 
 const init = async () => {
     await renderer.initialize();
     canvasContainer?.appendChild(renderer.canvas);
 
-    camera.position.set(0, 0, 10);
+    camera.position.set(0, 0, 50);
     for (let i = 0; i < 5000; i++) {
         const cube = new Renderable(geometry, material);
-        cube.position.x = Math.random() * 100 - 50;
-        cube.position.y = Math.random() * 20 - 10;
-        cube.scale.x = 5;
-        cube.scale.y = 0.01;
-        cube.scale.z = 0.01;
+        cube.position.x = Math.floor(Math.random() * 1000 - 500);
+        cube.position.y = Math.floor(Math.random() * 60 - 30);
+        cube.position.z = Math.floor(Math.random() * 60 - 30);
+        cube.scale.x = (Math.random() + 1) * 5 ;
+        cube.scale.y = 0.1;
+        cube.rotation.x = Math.PI;
         scene.add(cube);
     }
     window.addEventListener('resize', resize);
@@ -80,10 +71,10 @@ const init = async () => {
 
 const animate = () => {
     requestAnimationFrame(animate);
-    const time = performance.now() * 0.001;
+    const time = performance.now() * 0.0001;
     for (let i = 0; i < 5000; i++) {
         const cube = scene.children[i];
-        cube.position.x = Math.sin(time + i * 0.001) * 20 - 10;
+        cube.position.x = Math.sin(time + i * 0.001) * 100 - 50;
     }
     renderer.render(scene, camera);
 }
