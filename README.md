@@ -113,6 +113,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📫 Contact
 
-Felix Martinez - [@sirokos](https://twitter.com/sirokos)
+BlueSky - [@felixmatinez.dev](https://bsky.app/profile/felixmartinez.dev)
+
+Twitter - [@sirokos](https://twitter.com/sirokos)
 
 Project Link: [https://github.com/Siroko/genuary2025](https://github.com/Siroko/genuary2025)
