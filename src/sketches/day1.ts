@@ -1,4 +1,4 @@
-import { BoxGeometry, Camera, Material, Mesh, Renderer, Scene } from "kansei";
+import { BoxGeometry, Camera, Material, Renderable, Renderer, Scene } from "kansei";
 
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
 const camera: Camera = new Camera(45, 0.1, 100, window.innerWidth / window.innerHeight);
@@ -50,21 +50,21 @@ const material: Material =new Material(/* wgsl */`
         return vec4<f32>(halfLambertDiffuse, 1.0);
     }`,
     {
-        uniforms: [],
+        bindings: [],
     }
 );
 
 const geometry: BoxGeometry = new BoxGeometry(1, 1, 1);
 
-let cube: Mesh;
+let cube: Renderable;
 
 const init = async () => {
     await renderer.initialize();
-    canvasContainer?.appendChild(renderer.domElement);
+    canvasContainer?.appendChild(renderer.canvas);
 
     camera.position.set(0, 0, 10);
     for (let i = 0; i < 1000; i++) {
-        const cube = new Mesh(geometry, material);
+        const cube = new Renderable(geometry, material);
         cube.position.x = Math.random() * 20 - 10;
         cube.position.y = Math.random() * 20 - 10;
         cube.scale.x = 10;

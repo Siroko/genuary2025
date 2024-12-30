@@ -14,7 +14,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "kansei": "^0.0.8"
+    "kansei": "^0.0.9"
   },
   "devDependencies": {
     "concurrently": "^9.1.1",
