@@ -109,10 +109,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - [Genuary](https://genuary.art) for organizing this creative coding event
 - All prompt creators credited in the table above
-- [Kansei](https://github.com/your-link-to-kansei) for the creative coding framework
+- [Kansei](https://www.npmjs.com/package/kansei) for the creative coding framework
 
 ## 📫 Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
+Felix Martinez - [@sirokos](https://twitter.com/sirokos)
 
-Project Link: [https://github.com/yourusername/genuary2025](https://github.com/yourusername/genuary2025)
+Project Link: [https://github.com/Siroko/genuary2025](https://github.com/Siroko/genuary2025)
