@@ -1,0 +1,26 @@
+{
+  "name": "genuary2025",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "lite-server",
+    "watch-ts": "tsc -w",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "kansei": "^0.0.8"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.1",
+    "fast-glob": "^3.3.2",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.6"
+  },
+  "description": ""
+}

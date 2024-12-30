@@ -1,0 +1,38 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      kansei:
+        specifier: ^0.0.8
+        version: 0.0.8(@webgpu/types@0.1.52)(gl-matrix@3.4.3)
+
+packages:
+
+  '@webgpu/types@0.1.52':
+    resolution: {integrity: sha512-eI883Nlag2hGIkhXxAnq8s4APpqXWuPL3Gbn2ghiU12UjLvfCbVqHK4XfXl3eLRTatqcMmeK7jws7IwWsGfbzw==}
+
+  gl-matrix@3.4.3:
+    resolution: {integrity: sha512-wcCp8vu8FT22BnvKVPjXa/ICBWRq/zjFfdofZy1WSpQZpphblv12/bOQLBC1rMM7SGOFS9ltVmKOHil5+Ml7gA==}
+
+  kansei@0.0.8:
+    resolution: {integrity: sha512-Yt0SG7EmTUYDDiWra2wWzoQKaCQ4HJxwH6X0BxqPuLQxm5hpIxFtMmB03ihb2dhdc0tR4q3ZTn4I9R3s9czKEQ==}
+    peerDependencies:
+      '@webgpu/types': ^0.1.48
+      gl-matrix: ^3.4.3
+
+snapshots:
+
+  '@webgpu/types@0.1.52': {}
+
+  gl-matrix@3.4.3: {}
+
+  kansei@0.0.8(@webgpu/types@0.1.52)(gl-matrix@3.4.3):
+    dependencies:
+      '@webgpu/types': 0.1.52
+      gl-matrix: 3.4.3
