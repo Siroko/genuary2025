@@ -10,9 +10,8 @@ const renderer: Renderer = new Renderer({
     devicePixelRatio: devicePixelRatio,
 });
 const drops: Renderable[] = [];
-const dropCount = 1500;
 const ripples: Renderable[] = [];
-const rippleCount = 100;
+const dropCount = 1000;
 
 const mouseVectors: MouseVectors = new MouseVectors(canvasContainer!);
 const scene: Scene = new Scene();
@@ -67,7 +66,7 @@ const init = async () => {
         ripple.position.x = Math.floor(Math.random() * 1000 - 500);
         ripple.position.y = -15;
         ripple.position.z = Math.floor(Math.random() * 60 - 30);
-        ripple.scale.x = (Math.random() + 1) * 5;
+        ripple.scale.x = 0;
         ripple.scale.y = 0.1;
         ripple.rotation.x = Math.PI;
         scene.add(ripple);
@@ -89,35 +88,47 @@ const init = async () => {
     animate();
 }
 
+let lastTime = performance.now();
+
 const animate = () => {
     requestAnimationFrame(animate);
+    
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - lastTime) * 0.001; // Convert to seconds
+    lastTime = currentTime;
+
     mouseVectors.update(0.01);
     camera.position.x = mouseVectors.mousePosition.x * 2;
     camera.position.y = mouseVectors.mousePosition.y * -1;
-    const time = performance.now() * 0.0001;
+
     for (let i = 0; i < dropCount; i++) {
         const drop = drops[i];
-        drop.position.y -= 0.7;
+        drop.position.y -= 1.2 * deltaTime * 60; // Scale movement by deltaTime and normalize to 60fps
         if(drop.position.y < -10) {
+            const ripple = ripples[i];
+            
+            ripple.position.x = drop.position.x;
+            ripple.position.z = drop.position.z;
+            ripple.position.y = drop.position.y - (drop.scale.y * 0.5);
+            ripple.scale.x = 0;
+
             drop.position.x = Math.floor(Math.random() * 1000 - 500);
-            drop.position.y += 100;
-            ripples[i].position.x = drop.position.x;
-            ripples[i].position.z =drop.position.z;
-            ripples[i].position.y = -15;
-            ripples[i].scale.x = 0;
-            gsap.to(ripples[i].scale, {
+            drop.position.z = Math.floor(Math.random() * 60 - 30);
+            drop.position.y += 90;
+
+            const timeRandom = Math.random() * 0.25 + 0.75;
+            gsap.to(ripple.scale, {
                 x: (Math.random() + 1) * 5,
-                duration: 1.0,
+                duration: timeRandom,
                 ease: 'elastic.out',
             });
-            gsap.to(ripples[i].scale, {
+            gsap.to(ripple.scale, {
                 x: 0,
-                duration: 0.5,
+                duration: 0.2,
                 ease: 'power1.inOut',
-                delay: 1.0,
+                delay: timeRandom,
             });
         }
-        // cube.position.x = Math.sin(time + i * 0.001) * 200 - 100;
     }
     renderer.render(scene, camera);
 }
