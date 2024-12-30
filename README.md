@@ -50,7 +50,7 @@ This project uses:
 
 | Day | Prompt | Credit | Status |
 |-----|---------|--------|--------|
-| 1 | [Vertical or horizontal lines only](https://genuary25.felixmartinez.dev/sketches/day1.html) | Stranger in the Q | 🚧 |
+| 1 | [Vertical or horizontal lines only](https://genuary25.felixmartinez.dev/sketches/day1.html) | Stranger in the Q | ⏳ |
 | 2 | [Layers upon layers upon layers](https://genuary25.felixmartinez.dev/sketches/day2.html) | Monokai | 🚧 |
 | 3 | [Exactly 42 lines of code](https://genuary25.felixmartinez.dev/sketches/day3.html) | Roni Kaufman | 🚧 |
 | 4 | [Black on black](https://genuary25.felixmartinez.dev/sketches/day4.html) | Stranger in the Q | 🚧 |
