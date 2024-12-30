@@ -97,7 +97,7 @@ const animate = () => {
     const deltaTime = (currentTime - lastTime) * 0.001; // Convert to seconds
     lastTime = currentTime;
 
-    mouseVectors.update(0.01);
+    mouseVectors.update(deltaTime);
     camera.position.x = mouseVectors.mousePosition.x * 2;
     camera.position.y = mouseVectors.mousePosition.y * -1;
 
