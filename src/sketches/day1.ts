@@ -5,6 +5,8 @@ const camera: Camera = new Camera(45, 0.1, 100, window.innerWidth / window.inner
 const renderer: Renderer = new Renderer({
     width: window.innerWidth,
     height: window.innerHeight,
+    antialias: true,
+    devicePixelRatio: devicePixelRatio,
 });
 const scene: Scene = new Scene();
 const material: Material =new Material(/* wgsl */`
@@ -63,23 +65,33 @@ const init = async () => {
     canvasContainer?.appendChild(renderer.canvas);
 
     camera.position.set(0, 0, 10);
-    for (let i = 0; i < 1000; i++) {
+    for (let i = 0; i < 5000; i++) {
         const cube = new Renderable(geometry, material);
-        cube.position.x = Math.random() * 20 - 10;
+        cube.position.x = Math.random() * 100 - 50;
         cube.position.y = Math.random() * 20 - 10;
-        cube.scale.x = 10;
+        cube.scale.x = 5;
         cube.scale.y = 0.01;
         cube.scale.z = 0.01;
         scene.add(cube);
     }
-
+    window.addEventListener('resize', resize);
     animate();
 }
 
 const animate = () => {
     requestAnimationFrame(animate);
- 
+    const time = performance.now() * 0.001;
+    for (let i = 0; i < 5000; i++) {
+        const cube = scene.children[i];
+        cube.position.x = Math.sin(time + i * 0.001) * 20 - 10;
+    }
     renderer.render(scene, camera);
+}
+
+const resize = () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
 }
 
 init();
