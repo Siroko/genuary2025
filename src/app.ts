@@ -63,7 +63,7 @@ class GenuaryCalendar {
         card.innerHTML = `
             <h2 class="challenge-day">Day ${challenge.day}</h2>
             <p class="challenge-prompt">${challenge.prompt}</p>
-            <p class="challenge-credit">by ${challenge.credit}</p>
+            <p class="challenge-credit">prompt by ${challenge.credit}</p>
             <p class="challenge-status">${challenge.completed ? 'Completed' : 'Not started'}</p>
         `;
 

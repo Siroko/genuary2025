@@ -1,4 +1,4 @@
-import { Camera, Compute, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
+import { BufferBase, Camera, Compute, ComputeBuffer, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
 import gsap from "gsap";
 
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -49,30 +49,74 @@ const material: Material = new Material(/* wgsl */`
     {
         return vec4<f32>(1.0, 1.0, 1.0, 1.0);
     }`,
-    [
-        {
-            name: 'time',
-            type: 'f32',
-            value: 0,
-        },
-    ]
+    {
+        bindings: [],
+    }
 );
 
+const dropsPosBuffer = new Float32Array(dropCount * 4);
+for (let i = 0; i < dropCount; i++) {
+    dropsPosBuffer[i * 4] = Math.floor(Math.random() * 500 - 250); // X coordinate
+    dropsPosBuffer[i * 4 + 1] = Math.random() * 100; // Y coordinate
+    dropsPosBuffer[i * 4 + 2] = Math.floor(Math.random() * 60 - 30); // Z coordinate
+    dropsPosBuffer[i * 4 + 3] = 1; // W coordinate
+}
+
+const computeBufferPositions = new ComputeBuffer({
+    usage: 
+        BufferBase.BUFFER_USAGE_STORAGE |
+        BufferBase.BUFFER_USAGE_COPY_SRC |
+        BufferBase.BUFFER_USAGE_VERTEX,
+    type: ComputeBuffer.BUFFER_TYPE_STORAGE,
+    buffer: dropsPosBuffer,
+    shaderLocation: 2,
+    offset: 0,
+    stride: 4 * 4,
+    format: "float32x4"
+});
+
+const dropsScaleBuffer = new Float32Array(dropCount * 3);
+for (let i = 0; i < dropCount; i++) {
+    dropsScaleBuffer[i * 3] = 0.1;
+    dropsScaleBuffer[i * 3 + 1] = (Math.random() + 1) * 5;
+    dropsScaleBuffer[i * 3 + 2] = 1;
+}
+
+const computeBufferScales = new ComputeBuffer({
+    usage: 
+        BufferBase.BUFFER_USAGE_STORAGE |
+        BufferBase.BUFFER_USAGE_COPY_SRC |
+        BufferBase.BUFFER_USAGE_VERTEX,
+    type: ComputeBuffer.BUFFER_TYPE_STORAGE,
+    buffer: dropsScaleBuffer,
+    shaderLocation: 3,
+    offset: 0,
+    stride: 3 * 4,
+    format: "float32x3"
+});
+
 const compute: Compute = new Compute(/* wgsl */`
-    @group(0) @binding(0) var<uniform> time: f32;
+    struct Drop {
+        position: vec3<f32>,
+        scale: vec3<f32>
+    };
+
+    @group(0) @binding(0) var<uniform> deltaTime: f32;
     @group(0) @binding(1) var<uniform> dropCount: u32;
     @group(0) @binding(2) var<uniform> dropPositions: array<vec3<f32>>;
-    @group(0) @binding(3) var<uniform> dropSizes: array<f32>;
-    @group(0) @binding(4) var<uniform> dropSpeeds: array<f32>;
-    @group(0) @binding(5) var<uniform> dropColors: array<vec4<f32>>;
+    @group(0) @binding(3) var<uniform> dropScales: array<vec3<f32>>;
 
-    @compute
-    fn compute_main() {
-
-    }
-`, {
-    bindings: [],
-});
+    @compute @workgroup_size(64)
+    fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+        let index = global_id.x;
+        let drop = Drop(dropPositions[index], dropScales[index]);
+        drop.position.y -= drop.speed * deltaTime;
+        dropPositions[index] = drop.position;
+    }`, 
+    [
+        
+    ]
+);
 
 const geometry: PlaneGeometry = new PlaneGeometry(1, 1);
 
@@ -131,6 +175,7 @@ const animate = () => {
             ripple.position.z = drop.position.z;
             ripple.position.y = drop.position.y - (drop.scale.y * 0.5);
             ripple.scale.x = 0;
+            ripple.scale.y = 0.1;
 
             drop.position.x = Math.floor(Math.random() * 150 - 75);
             drop.position.z = Math.floor(Math.random() * 60 - 30);
@@ -143,10 +188,10 @@ const animate = () => {
                 ease: 'elastic.out',
             });
             gsap.to(ripple.scale, {
-                x: 0,
+                y: 0,
                 duration: 0.2,
                 ease: 'power1.inOut',
-                delay: timeRandom,
+                delay: 0.1,
             });
         }
     }

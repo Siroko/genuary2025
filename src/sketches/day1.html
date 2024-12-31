@@ -9,27 +9,73 @@
             margin: 0;
             overflow: hidden;
             background: #1a1a1a;
+            font-family: 'Arial', sans-serif;
         }
         canvas {
             display: block;
             width: 100%;
             height: 100%;
         }
-        .back-button {
+        .info-container {
+            display: flex;
+            flex-direction: column;
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             left: 20px;
-            padding: 10px 20px;
-            background: #00ff00;
-            color: #1a1a1a;
+            gap: 4px;
+        }
+        .info-container h1 {
+            margin-bottom: 3px;
+
+            font-size: 16px;
+            color: #ffffff;
+        }
+        .info-container p {
+            margin: 0;
+            font-size: 10px;
+            color: #ffffff;
+        }
+        .info-container p a {
             text-decoration: none;
-            border-radius: 5px;
+            color: #ffffff;
+        }
+        .button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .button-container a {
+            text-decoration: none;
+        }
+        .button {
+            padding: 10px 10px;
+            background: #ffffff;
+            text-align: center;
+            color: #1a1a1a;
+            border-radius: 50px;
+            font-size: 15px;
+            width: 25px;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
-    <a href="../index.html" class="back-button">Back to Calendar</a>
+    <div class="info-container">
+        <h1>Day 1 — A rainy day.</h1>
+        <p>Prompt: "Vertical or horizontal lines only."</p>
+        <p>Source code: <a href="https://github.com/Siroko/genuary2025/blob/main/src/sketches/day1.ts" target="_blank"><u>day1.ts</u></a></p>
+        <p><a href="https://linktr.ee/felix.martinez" target="_blank">Social links: <u>Linktree</u><a></p>
+    </div>
+    <div class="button-container">
+        <a href="../index.html"><div class="button">⭠</div></a>
+        <div class="button audio-btn" onclick="toggleAudio()">♫</div>
+    </div>
     <div id="canvas-container"></div>
+    <audio src="./rain.mp3" muted autoplay loop></audio>
     <script type="module" src="./day1.ts"></script>
+    <script src="../utils.ts"></script>
 </body>
 </html> 
