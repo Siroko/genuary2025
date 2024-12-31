@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import glob from 'fast-glob';
+import mkcert from 'vite-plugin-mkcert';
 
 // Get all HTML files in src directory
 const htmlFiles = glob.sync('src/**/*.html').reduce((acc, file) => {
@@ -16,6 +17,9 @@ const htmlFiles = glob.sync('src/**/*.html').reduce((acc, file) => {
 export default defineConfig({
   root: 'src',
   base: './',
+  plugins: [
+    mkcert()
+  ],
   build: {
     outDir: '../dist',
     emptyOutDir: true,
@@ -42,6 +46,7 @@ export default defineConfig({
     }
   },
   server: {
-    open: true
+    open: true,
+    https: true
   }
 }); 

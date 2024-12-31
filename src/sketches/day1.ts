@@ -1,4 +1,4 @@
-import { Camera, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
+import { BufferBase, Camera, Compute, ComputeBuffer, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
 import gsap from "gsap";
 
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -11,11 +11,11 @@ const renderer: Renderer = new Renderer({
 });
 const drops: Renderable[] = [];
 const ripples: Renderable[] = [];
-const dropCount = 1000;
+const dropCount = 500;
 
 const mouseVectors: MouseVectors = new MouseVectors(canvasContainer!);
 const scene: Scene = new Scene();
-const material: Material =new Material(/* wgsl */`
+const material: Material = new Material(/* wgsl */`
     struct VertexOut {
         @builtin(position) position : vec4<f32>,
         @location(1) normal : vec3<f32>,
@@ -54,6 +54,70 @@ const material: Material =new Material(/* wgsl */`
     }
 );
 
+const dropsPosBuffer = new Float32Array(dropCount * 4);
+for (let i = 0; i < dropCount; i++) {
+    dropsPosBuffer[i * 4] = Math.floor(Math.random() * 500 - 250); // X coordinate
+    dropsPosBuffer[i * 4 + 1] = Math.random() * 100; // Y coordinate
+    dropsPosBuffer[i * 4 + 2] = Math.floor(Math.random() * 60 - 30); // Z coordinate
+    dropsPosBuffer[i * 4 + 3] = 1; // W coordinate
+}
+
+const computeBufferPositions = new ComputeBuffer({
+    usage: 
+        BufferBase.BUFFER_USAGE_STORAGE |
+        BufferBase.BUFFER_USAGE_COPY_SRC |
+        BufferBase.BUFFER_USAGE_VERTEX,
+    type: ComputeBuffer.BUFFER_TYPE_STORAGE,
+    buffer: dropsPosBuffer,
+    shaderLocation: 2,
+    offset: 0,
+    stride: 4 * 4,
+    format: "float32x4"
+});
+
+const dropsScaleBuffer = new Float32Array(dropCount * 3);
+for (let i = 0; i < dropCount; i++) {
+    dropsScaleBuffer[i * 3] = 0.1;
+    dropsScaleBuffer[i * 3 + 1] = (Math.random() + 1) * 5;
+    dropsScaleBuffer[i * 3 + 2] = 1;
+}
+
+const computeBufferScales = new ComputeBuffer({
+    usage: 
+        BufferBase.BUFFER_USAGE_STORAGE |
+        BufferBase.BUFFER_USAGE_COPY_SRC |
+        BufferBase.BUFFER_USAGE_VERTEX,
+    type: ComputeBuffer.BUFFER_TYPE_STORAGE,
+    buffer: dropsScaleBuffer,
+    shaderLocation: 3,
+    offset: 0,
+    stride: 3 * 4,
+    format: "float32x3"
+});
+
+const compute: Compute = new Compute(/* wgsl */`
+    struct Drop {
+        position: vec3<f32>,
+        scale: vec3<f32>
+    };
+
+    @group(0) @binding(0) var<uniform> deltaTime: f32;
+    @group(0) @binding(1) var<uniform> dropCount: u32;
+    @group(0) @binding(2) var<uniform> dropPositions: array<vec3<f32>>;
+    @group(0) @binding(3) var<uniform> dropScales: array<vec3<f32>>;
+
+    @compute @workgroup_size(64)
+    fn main(@builtin(global_invocation_id) global_id: vec3<u32>) {
+        let index = global_id.x;
+        let drop = Drop(dropPositions[index], dropScales[index]);
+        drop.position.y -= drop.speed * deltaTime;
+        dropPositions[index] = drop.position;
+    }`, 
+    [
+        
+    ]
+);
+
 const geometry: PlaneGeometry = new PlaneGeometry(1, 1);
 
 const init = async () => {
@@ -63,9 +127,9 @@ const init = async () => {
     camera.position.set(0, 0, 50);
     for (let i = 0; i < dropCount; i++) {
         const ripple = new Renderable(geometry, material);
-        ripple.position.x = Math.floor(Math.random() * 1000 - 500);
-        ripple.position.y = -15;
-        ripple.position.z = Math.floor(Math.random() * 60 - 30);
+        ripple.position.x = 0;
+        ripple.position.y = 0;
+        ripple.position.z = 0;
         ripple.scale.x = 0;
         ripple.scale.y = 0.1;
         ripple.rotation.x = Math.PI;
@@ -75,7 +139,7 @@ const init = async () => {
 
     for (let i = 0; i < dropCount; i++) {
         const drop = new Renderable(geometry, material);
-        drop.position.x = Math.floor(Math.random() * 1000 - 500);
+        drop.position.x = Math.floor(Math.random() * 500 - 250);
         drop.position.y = Math.random() * 100;
         drop.position.z = Math.floor(Math.random() * 60 - 30);
         drop.scale.x = 0.1;
@@ -111,8 +175,9 @@ const animate = () => {
             ripple.position.z = drop.position.z;
             ripple.position.y = drop.position.y - (drop.scale.y * 0.5);
             ripple.scale.x = 0;
+            ripple.scale.y = 0.1;
 
-            drop.position.x = Math.floor(Math.random() * 1000 - 500);
+            drop.position.x = Math.floor(Math.random() * 150 - 75);
             drop.position.z = Math.floor(Math.random() * 60 - 30);
             drop.position.y += 90;
 
@@ -123,10 +188,10 @@ const animate = () => {
                 ease: 'elastic.out',
             });
             gsap.to(ripple.scale, {
-                x: 0,
+                y: 0,
                 duration: 0.2,
                 ease: 'power1.inOut',
-                delay: timeRandom,
+                delay: 0.1,
             });
         }
     }
