@@ -8,3 +8,21 @@ audioBtn!.style.opacity = audioSelector!.muted ? '0.5' : '1';
         audioBtn.style.opacity = audioSelector.muted ? '0.5' : '1';
     }
 }
+
+const infoContainer: HTMLElement | null = document.querySelector('.wrapper');
+let timeoutId: number = 0;
+timeoutId = setTimeout(() => {
+    infoContainer!.style.transition = 'opacity 0.5s ease-in-out';
+    infoContainer!.style.opacity = '0';
+}, 4000);
+addEventListener('mousemove', (e) => {
+    const y = e.clientY;
+    if(y > window.innerHeight / 1.3) {
+        infoContainer!.style.opacity = '1';
+        
+    }
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+        infoContainer!.style.opacity = '0';
+    }, 2000);
+});
