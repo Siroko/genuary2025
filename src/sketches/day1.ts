@@ -1,4 +1,4 @@
-import { Camera, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
+import { Camera, Compute, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene } from "kansei";
 import gsap from "gsap";
 
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -11,11 +11,11 @@ const renderer: Renderer = new Renderer({
 });
 const drops: Renderable[] = [];
 const ripples: Renderable[] = [];
-const dropCount = 1000;
+const dropCount = 500;
 
 const mouseVectors: MouseVectors = new MouseVectors(canvasContainer!);
 const scene: Scene = new Scene();
-const material: Material =new Material(/* wgsl */`
+const material: Material = new Material(/* wgsl */`
     struct VertexOut {
         @builtin(position) position : vec4<f32>,
         @location(1) normal : vec3<f32>,
@@ -49,10 +49,30 @@ const material: Material =new Material(/* wgsl */`
     {
         return vec4<f32>(1.0, 1.0, 1.0, 1.0);
     }`,
-    {
-        bindings: [],
-    }
+    [
+        {
+            name: 'time',
+            type: 'f32',
+            value: 0,
+        },
+    ]
 );
+
+const compute: Compute = new Compute(/* wgsl */`
+    @group(0) @binding(0) var<uniform> time: f32;
+    @group(0) @binding(1) var<uniform> dropCount: u32;
+    @group(0) @binding(2) var<uniform> dropPositions: array<vec3<f32>>;
+    @group(0) @binding(3) var<uniform> dropSizes: array<f32>;
+    @group(0) @binding(4) var<uniform> dropSpeeds: array<f32>;
+    @group(0) @binding(5) var<uniform> dropColors: array<vec4<f32>>;
+
+    @compute
+    fn compute_main() {
+
+    }
+`, {
+    bindings: [],
+});
 
 const geometry: PlaneGeometry = new PlaneGeometry(1, 1);
 
@@ -63,9 +83,9 @@ const init = async () => {
     camera.position.set(0, 0, 50);
     for (let i = 0; i < dropCount; i++) {
         const ripple = new Renderable(geometry, material);
-        ripple.position.x = Math.floor(Math.random() * 1000 - 500);
-        ripple.position.y = -15;
-        ripple.position.z = Math.floor(Math.random() * 60 - 30);
+        ripple.position.x = 0;
+        ripple.position.y = 0;
+        ripple.position.z = 0;
         ripple.scale.x = 0;
         ripple.scale.y = 0.1;
         ripple.rotation.x = Math.PI;
@@ -75,7 +95,7 @@ const init = async () => {
 
     for (let i = 0; i < dropCount; i++) {
         const drop = new Renderable(geometry, material);
-        drop.position.x = Math.floor(Math.random() * 1000 - 500);
+        drop.position.x = Math.floor(Math.random() * 500 - 250);
         drop.position.y = Math.random() * 100;
         drop.position.z = Math.floor(Math.random() * 60 - 30);
         drop.scale.x = 0.1;
@@ -112,7 +132,7 @@ const animate = () => {
             ripple.position.y = drop.position.y - (drop.scale.y * 0.5);
             ripple.scale.x = 0;
 
-            drop.position.x = Math.floor(Math.random() * 1000 - 500);
+            drop.position.x = Math.floor(Math.random() * 150 - 75);
             drop.position.z = Math.floor(Math.random() * 60 - 30);
             drop.position.y += 90;
 
