@@ -1,18 +1,12 @@
 import { defineConfig } from 'vite';
+import { glob } from 'glob';
 import { resolve } from 'path';
-import glob from 'fast-glob';
 import mkcert from 'vite-plugin-mkcert';
 
-// Get all HTML files in src directory
-const htmlFiles = glob.sync('src/**/*.html').reduce((acc, file) => {
-  // Convert file path to entry point name
-  const entryName = file
-    .replace('src/', '')     // Remove src/ prefix
-    .replace('.html', '');   // Remove .html extension
-  
-  acc[entryName] = resolve(__dirname, file);
-  return acc;
-}, {});
+// Get all HTML files in src directory and subdirectories
+const htmlFiles = glob.sync('**/*.html', {
+  ignore: ['dist/**', 'node_modules/**']
+}).map(file => resolve(__dirname, file));
 
 export default defineConfig({
   root: 'src',
@@ -27,7 +21,7 @@ export default defineConfig({
       input: htmlFiles,
       output: {
         entryFileNames: (chunkInfo) => {
-          // Keep TypeScript files in their original directories
+          // Handle both .ts and .js files
           return chunkInfo.name.includes('/')
             ? `${chunkInfo.name.split('/').slice(0, -1).join('/')}/[name].js`
             : '[name].js';
@@ -48,5 +42,8 @@ export default defineConfig({
   server: {
     open: true,
     https: true
+  },
+  resolve: {
+    extensions: ['.ts', '.js']
   }
 }); 
