@@ -15,8 +15,8 @@ importers:
         specifier: ^3.12.5
         version: 3.12.5
       kansei:
-        specifier: ^0.0.10
-        version: 0.0.10(@webgpu/types@0.1.52)(gl-matrix@3.4.3)
+        specifier: ^0.0.11
+        version: 0.0.11(@webgpu/types@0.1.52)(gl-matrix@3.4.3)
     devDependencies:
       '@webgpu/types':
         specifier: ^0.1.52
@@ -534,8 +534,8 @@ packages:
     resolution: {integrity: sha512-bZsjR/iRjl1Nk1UkjGpAzLNfQtzuijhn2g+pbZb98HQ1Gk8vM9hfbxeMBP+M2/UUdwj0RqGG3mlvk2MsAqwvEw==}
     engines: {node: 20 || >=22}
 
-  kansei@0.0.10:
-    resolution: {integrity: sha512-qar/GcUVBSWtudCfc+a4zzv95JFG6fDB7/YgMpyu/Wd2aywtgwVjFDkiHVFIrg62NFXtOFqPEekiBgALME0CbA==}
+  kansei@0.0.11:
+    resolution: {integrity: sha512-XjqMoniJswzUG4zxeIbh/iXT1kCVykr7PeYusCa3IfmqA+Ml3a4oX3nYmiV8qhIYlUkg4BkPAWRAWrms0eCLgQ==}
     peerDependencies:
       '@webgpu/types': ^0.1.48
       gl-matrix: ^3.4.3
@@ -1172,7 +1172,7 @@ snapshots:
     dependencies:
       '@isaacs/cliui': 8.0.2
 
-  kansei@0.0.10(@webgpu/types@0.1.52)(gl-matrix@3.4.3):
+  kansei@0.0.11(@webgpu/types@0.1.52)(gl-matrix@3.4.3):
     dependencies:
       '@webgpu/types': 0.1.52
       gl-matrix: 3.4.3

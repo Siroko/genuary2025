@@ -1,4 +1,4 @@
-import { BufferBase, Camera, CameraControls, Compute, ComputeBuffer, Float, InstancedGeometry, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Scene, Vector3 } from "kansei";
+import { BufferBase, Camera, CameraControls, Compute, ComputeBuffer, Float, InstancedGeometry, Material, MouseVectors, PlaneGeometry, Renderable, Renderer, Sampler, Scene, Vector3, VideoTexture } from "kansei";
 import gsap from "gsap";
 
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -16,8 +16,40 @@ const time = new Float(0);
 const mouseVectors: MouseVectors = new MouseVectors(canvasContainer!);
 const cameraControls: CameraControls = new CameraControls(camera, new Vector3(0, 0, 0), canvasContainer!);
 const scene: Scene = new Scene();
+
+const sampler = new Sampler('linear', 'linear', 'repeat');
+const video = document.createElement('video');
+video.autoplay = true;
+video.muted = true;
+video.playsInline = true;
+let videoInitialized = false;
+
+const clickHandler = () => {
+    document.body.removeEventListener('click', clickHandler);
+    // Request webcam access
+    navigator.mediaDevices.getUserMedia({ 
+        video: {
+            width: 1920,
+            height: 1080,
+        },
+        audio: true
+    })
+    .then(stream => {
+        video.srcObject = stream;
+        video.oncanplay = () => {
+            videoInitialized = true;
+            video.play();
+        }    
+    })
+    .catch(err => {
+        console.error("Error accessing webcam:", err);
+    });
+}
+document.body.addEventListener("click", clickHandler);
+
+const videoTexture: VideoTexture = new VideoTexture(video);
+
 const material: Material = new Material(/* wgsl */`
-    #include <curl>
     struct VertexOut {
         @builtin(position) position : vec4<f32>,
         @location(1) normal : vec3<f32>,
@@ -27,6 +59,8 @@ const material: Material = new Material(/* wgsl */`
     };
 
     @group(0) @binding(0) var<uniform> time:f32;
+    @group(0) @binding(1) var videoTexture:texture_external;
+    @group(0) @binding(2) var texSampler:sampler;
 
     @group(1) @binding(0) var<uniform> normalMatrix:mat4x4<f32>;
     @group(1) @binding(1) var<uniform> worldMatrix:mat4x4<f32>;
@@ -45,8 +79,8 @@ const material: Material = new Material(/* wgsl */`
         var output : VertexOut;
         var p = position;
         p.z -= (f32(instanceID) * 0.7) - 100.0;
-        // p.y += sin(time + p.z * 0.07) * 10.7;
-        // p.x += cos(time + p.z * 0.07) * 10.7;
+        p.y += sin(time + p.z * 0.07) * (20.7 * smoothstep(-100.0, 50.0, p.z));
+        p.x += cos(time + p.z * 0.07) * (20.7 * smoothstep(-100.0, 70.0, p.z));
         output.instancePosition = p;
         output.position = projectionMatrix * viewMatrix * worldMatrix * p;
         
@@ -58,19 +92,12 @@ const material: Material = new Material(/* wgsl */`
 
     @fragment
     fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
-    {
-        let minEdge = 0.006;
-        let maxEdge = 0.008;
-        // var n = getCurlVelocity(vec4<f32>(fragData.uv, fragData.instancePosition.z, 0.0));
-        var edgeLX = smoothstep(minEdge, maxEdge, fragData.uv.x);
-        var edgeRX = smoothstep(minEdge, maxEdge, 1.0 - fragData.uv.x);
-        var edgeX = min(edgeLX, edgeRX);
-        var edgeTY = smoothstep(minEdge, maxEdge, fragData.uv.y);
-        var edgeBY = smoothstep(minEdge, maxEdge, 1.0 - fragData.uv.y);
-        var edgeY = min(edgeTY, edgeBY);
-        var edge = min(edgeX, edgeY);
- 
-        return vec4<f32>(1.0, 1.0, 1.0, 1.1 - edge);
+    {   
+        var uvFlipY = vec2<f32>(fragData.uv.x, 1.0 - fragData.uv.y);
+        var videoColor:vec4<f32> = textureSampleBaseClampToEdge(videoTexture, texSampler, uvFlipY);
+        
+        var luminance = dot(videoColor.rgb, vec3<f32>(0.2125, 0.7154, 0.0721));
+        return vec4<f32>(videoColor.r, videoColor.g, videoColor.b, 1.0 - step(0.55, luminance) /*1.1 - edge*/);
     }`,
     {
         bindings: [
@@ -79,13 +106,23 @@ const material: Material = new Material(/* wgsl */`
                 visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
                 value: time,
             },
+            {
+                binding: 1,
+                visibility: GPUShaderStage.FRAGMENT,
+                value: videoTexture,
+            },
+            {
+                binding: 2,
+                visibility: GPUShaderStage.FRAGMENT,
+                value: sampler,
+            }
         ],
         cullMode: 'none',
         transparent: true,
     }
 );
 
-const geometry: PlaneGeometry = new PlaneGeometry(10, 10, 1, 1);
+const geometry: PlaneGeometry = new PlaneGeometry(19, 9, 1, 1);
 const layersInstanced: InstancedGeometry = new InstancedGeometry(geometry, layerCount);
 
 const init = async () => {
@@ -94,6 +131,8 @@ const init = async () => {
     
     const layerRenderable: Renderable = new Renderable(layersInstanced, material);
     scene.add(layerRenderable);
+
+
     
     window.addEventListener('resize', resize);
     animate();
@@ -112,7 +151,11 @@ const animate = () => {
     mouseVectors.update(deltaTime);
     cameraControls.update(deltaTime);
 
-    renderer.render(scene, camera);
+    if(videoInitialized) {
+        console.log('render');
+        renderer.render(scene, camera);
+        videoTexture.update();
+    }
 }
 
 const resize = () => {

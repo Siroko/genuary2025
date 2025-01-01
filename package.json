@@ -16,7 +16,7 @@
   "dependencies": {
     "glob": "^11.0.0",
     "gsap": "^3.12.5",
-    "kansei": "^0.0.10"
+    "kansei": "^0.0.11"
   },
   "devDependencies": {
     "@webgpu/types": "^0.1.52",
