@@ -59,8 +59,9 @@ let videoInitialized = false;
 
 // Click handler to initialize webcam
 // We need user interaction before requesting camera access
+const buttonWebcam: HTMLElement | null = document.querySelector('.button-webcam');
 const clickHandler = () => {
-    document.body.removeEventListener('click', clickHandler);
+    buttonWebcam!.removeEventListener('click', clickHandler);
     // Request webcam access with HD resolution preferences
     navigator.mediaDevices.getUserMedia({ 
         video: {
@@ -75,13 +76,14 @@ const clickHandler = () => {
         video.oncanplay = () => {
             videoInitialized = true;
             video.play();
+            buttonWebcam!.style.display = 'none';
         }    
     })
     .catch(err => {
         console.error("Error accessing webcam:", err);
     });
 }
-document.body.addEventListener("click", clickHandler);
+buttonWebcam!.addEventListener("click", clickHandler);
 
 // Create video texture to use in WebGPU
 const videoTexture: VideoTexture = new VideoTexture(video);
