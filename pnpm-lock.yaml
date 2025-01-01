@@ -18,6 +18,9 @@ importers:
         specifier: ^0.0.10
         version: 0.0.10(@webgpu/types@0.1.52)(gl-matrix@3.4.3)
     devDependencies:
+      '@webgpu/types':
+        specifier: ^0.1.52
+        version: 0.1.52
       concurrently:
         specifier: ^9.1.1
         version: 9.1.1
