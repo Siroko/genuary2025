@@ -31,7 +31,7 @@ const renderer: Renderer = new Renderer({
 });
 
 // Define number of layers for the 3D depth effect
-const layerCount = 256;
+const layerCount = 32;
 
 // Create a float uniform for time-based animations
 const time = new Float(0);
@@ -122,12 +122,12 @@ const material: Material = new Material(/* wgsl */`
         var p = position;
         
         // Create depth effect by offsetting each instance along Z
-        p.z -= (f32(instanceID) * 0.7) - 100.0;  // Spread instances in depth
+        p.z += (f32(instanceID) * 0.3) - 9.0;  // Spread instances in depth
         
         // Add animated wave effect
         // Wave amplitude increases towards viewer using smoothstep
-        p.y += sin(time + p.z * 0.07) * (20.7 * smoothstep(-100.0, 50.0, p.z));
-        p.x += cos(time + p.z * 0.07) * (20.7 * smoothstep(-100.0, 70.0, p.z));
+        // p.y += sin(time + p.z * 0.07) * (f32(instanceID) * smoothstep(50.0, 100.0, p.z));
+        // p.x += cos(time + p.z * 0.07) * (f32(instanceID) * smoothstep(50.0, 100.0, p.z));
         
         output.instancePosition = p;
         // Transform to clip space through matrix chain
@@ -140,20 +140,74 @@ const material: Material = new Material(/* wgsl */`
         return output;
     } 
 
+    fn make_kernel(coord: vec2<f32>) -> array<vec4<f32>, 9> {
+        var n: array<vec4<f32>, 9>;
+        let w = 1.0 / f32(textureDimensions(videoTexture).x);
+        let h = 1.0 / f32(textureDimensions(videoTexture).y);
+        
+        n[0] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(-w, -h));
+        n[1] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(0.0, -h));
+        n[2] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(w, -h));
+        n[3] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(-w, 0.0));
+        n[4] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord);
+        n[5] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(w, 0.0));
+        n[6] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(-w, h));
+        n[7] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(0.0, h));
+        n[8] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(w, h));
+        
+        return n;
+    }
     @fragment
     fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     {   
-        // Flip UVs vertically (webcam is usually flipped)
         var uvFlipY = vec2<f32>(fragData.uv.x, 1.0 - fragData.uv.y);
-        // Sample video texture
-        var videoColor:vec4<f32> = textureSampleBaseClampToEdge(videoTexture, texSampler, uvFlipY);
+        var videoColor = textureSampleBaseClampToEdge(videoTexture, texSampler, uvFlipY);
+        // Get the kernel samples
+        // let kernel = make_kernel(uvFlipY);
+        // var blurred: array<vec4<f32>, 9>;
         
-        // Calculate perceived brightness using standard luminance weights
-        var luminance = dot(videoColor.rgb, vec3<f32>(0.2125, 0.7154, 0.0721));
+        // // Fixed 3x3 box blur - much faster than dynamic neighbor calculation
+        // blurred[0] = (kernel[0] + kernel[1] + kernel[3]) / 3.0;
+        // blurred[1] = (kernel[0] + kernel[1] + kernel[2]) / 3.0;
+        // blurred[2] = (kernel[1] + kernel[2] + kernel[5]) / 3.0;
+        // blurred[3] = (kernel[0] + kernel[3] + kernel[6]) / 3.0;
+        // blurred[4] = (kernel[1] + kernel[4] + kernel[7]) / 3.0;
+        // blurred[5] = (kernel[2] + kernel[5] + kernel[8]) / 3.0;
+        // blurred[6] = (kernel[3] + kernel[6] + kernel[7]) / 3.0;
+        // blurred[7] = (kernel[6] + kernel[7] + kernel[8]) / 3.0;
+        // blurred[8] = (kernel[5] + kernel[7] + kernel[8]) / 3.0;
         
-        // Create transparency based on brightness
-        // Bright areas become transparent, dark areas remain solid
-        return vec4<f32>(videoColor.r, videoColor.g, videoColor.b, 1.0 - step(0.55, luminance));
+        // // Calculate Sobel edges using the blurred values
+        // let sobel_edge_h = blurred[2] + (2.0 * blurred[5]) + blurred[8] - 
+        //                    (blurred[0] + (2.0 * blurred[3]) + blurred[6]);
+        // let sobel_edge_v = blurred[0] + (2.0 * blurred[1]) + blurred[2] - 
+        //                    (blurred[6] + (2.0 * blurred[7]) + blurred[8]);
+        
+        // let sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
+        
+        // let luminance = dot(sobel.rgb, vec3<f32>(0.2125, 0.7154, 0.0721));
+        // let contrast = pow(luminance, 1.1);
+        // let alpha = smoothstep(0.25, 0.3, luminance);
+
+        let minEdge = 0.002;
+        let maxEdge = 0.004;
+        // var n = getCurlVelocity(vec4<f32>(fragData.uv, fragData.instancePosition.z, 0.0));
+        var edgeLX = smoothstep(minEdge, maxEdge, fragData.uv.x);
+        var edgeRX = smoothstep(minEdge, maxEdge, 1.0 - fragData.uv.x);
+        var edgeX = min(edgeLX, edgeRX);
+        var edgeTY = smoothstep(minEdge, maxEdge, fragData.uv.y);
+        var edgeBY = smoothstep(minEdge, maxEdge, 1.0 - fragData.uv.y);
+        var edgeY = min(edgeTY, edgeBY);
+        var edge = 1.0 - min(edgeX, edgeY);
+        let luminance = dot(videoColor.rgb, vec3<f32>(0.2125, 0.7154, 0.0721));
+        
+        // Add brightness adjustment
+        let brightness = luminance + 0.1; // Increase by 0.2, adjust this value as needed
+        let contrast = pow(brightness, 1.9);
+        
+        videoColor = vec4<f32>(vec3<f32>(contrast + edge), mix(0.2, 1.0, smoothstep(0.25, 0.3, edge)));
+        
+        return videoColor;
     }`,
     {
         // Configure material bindings for the shader
@@ -182,7 +236,7 @@ const material: Material = new Material(/* wgsl */`
 // Create base geometry for video plane
 // Using 16:9 aspect ratio to match typical video dimensions
 const geometry: PlaneGeometry = new PlaneGeometry(16, 9, 1, 1);
-// Create instanced version for layered effect
+// Create instanced Geometry for the layered effect
 const layersInstanced: InstancedGeometry = new InstancedGeometry(geometry, layerCount);
 
 // Initialize the application
