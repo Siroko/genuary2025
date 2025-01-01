@@ -19,6 +19,7 @@
     "kansei": "^0.0.10"
   },
   "devDependencies": {
+    "@webgpu/types": "^0.1.52",
     "concurrently": "^9.1.1",
     "fast-glob": "^3.3.2",
     "typescript": "^5.7.2",
