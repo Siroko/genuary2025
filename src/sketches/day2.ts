@@ -122,7 +122,7 @@ const material: Material = new Material(/* wgsl */`
     }
 );
 
-const geometry: PlaneGeometry = new PlaneGeometry(19, 9, 1, 1);
+const geometry: PlaneGeometry = new PlaneGeometry(16, 9, 1, 1);
 const layersInstanced: InstancedGeometry = new InstancedGeometry(geometry, layerCount);
 
 const init = async () => {
