@@ -26,7 +26,7 @@ let videoInitialized = false;
 
 const clickHandler = () => {
     document.body.removeEventListener('click', clickHandler);
-    // Request webcam access
+    // Request webcam access with HD resolution
     navigator.mediaDevices.getUserMedia({ 
         video: {
             width: 1920,
@@ -132,8 +132,6 @@ const init = async () => {
     const layerRenderable: Renderable = new Renderable(layersInstanced, material);
     scene.add(layerRenderable);
 
-
-    
     window.addEventListener('resize', resize);
     animate();
 }
@@ -144,7 +142,7 @@ const animate = () => {
     requestAnimationFrame(animate);
     
     const currentTime = performance.now();
-    const deltaTime = (currentTime - lastTime) * 0.001; // Convert to seconds
+    const deltaTime = (currentTime - lastTime) * 0.001;
     lastTime = currentTime;
     time.value += deltaTime;
 
@@ -152,9 +150,7 @@ const animate = () => {
     cameraControls.update(deltaTime);
 
     if(videoInitialized) {
-        console.log('render');
         renderer.render(scene, camera);
-        videoTexture.update();
     }
 }
 
