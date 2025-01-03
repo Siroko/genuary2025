@@ -31,7 +31,7 @@ const renderer: Renderer = new Renderer({
 });
 
 // Define number of layers for the 3D depth effect
-const layerCount = 32;
+const layerCount = 64;
 
 // Create a float uniform for time-based animations
 const time = new Float(0);
@@ -102,7 +102,7 @@ const material: Material = new Material(/* wgsl */`
     // Bind global uniforms and textures
     // Group 0: Per-material uniforms
     @group(0) @binding(0) var<uniform> time:f32;              // Global animation time
-    @group(0) @binding(1) var videoTexture:texture_external;  // Webcam video feed
+    @group(0) @binding(1) var videoTexture:texture_external;   // Webcam video feed
     @group(0) @binding(2) var texSampler:sampler;             // Texture sampling config
 
     // Group 1 & 2: Transform matrices
@@ -126,11 +126,6 @@ const material: Material = new Material(/* wgsl */`
         // Create depth effect by offsetting each instance along Z
         p.z += (f32(instanceID) * 0.3) - 9.0;  // Spread instances in depth
         
-        // Add animated wave effect
-        // Wave amplitude increases towards viewer using smoothstep
-        // p.y += sin(time + p.z * 0.07) * (f32(instanceID) * smoothstep(50.0, 100.0, p.z));
-        // p.x += cos(time + p.z * 0.07) * (f32(instanceID) * smoothstep(50.0, 100.0, p.z));
-        
         output.instancePosition = p;
         // Transform to clip space through matrix chain
         output.position = projectionMatrix * viewMatrix * worldMatrix * p;
@@ -142,54 +137,11 @@ const material: Material = new Material(/* wgsl */`
         return output;
     } 
 
-    fn make_kernel(coord: vec2<f32>) -> array<vec4<f32>, 9> {
-        var n: array<vec4<f32>, 9>;
-        let w = 1.0 / f32(textureDimensions(videoTexture).x);
-        let h = 1.0 / f32(textureDimensions(videoTexture).y);
-        
-        n[0] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(-w, -h));
-        n[1] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(0.0, -h));
-        n[2] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(w, -h));
-        n[3] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(-w, 0.0));
-        n[4] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord);
-        n[5] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(w, 0.0));
-        n[6] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(-w, h));
-        n[7] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(0.0, h));
-        n[8] = textureSampleBaseClampToEdge(videoTexture, texSampler, coord + vec2<f32>(w, h));
-        
-        return n;
-    }
     @fragment
     fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     {   
         var uvFlipY = vec2<f32>(fragData.uv.x, 1.0 - fragData.uv.y);
         var videoColor = textureSampleBaseClampToEdge(videoTexture, texSampler, uvFlipY);
-        // Get the kernel samples
-        // let kernel = make_kernel(uvFlipY);
-        // var blurred: array<vec4<f32>, 9>;
-        
-        // // Fixed 3x3 box blur - much faster than dynamic neighbor calculation
-        // blurred[0] = (kernel[0] + kernel[1] + kernel[3]) / 3.0;
-        // blurred[1] = (kernel[0] + kernel[1] + kernel[2]) / 3.0;
-        // blurred[2] = (kernel[1] + kernel[2] + kernel[5]) / 3.0;
-        // blurred[3] = (kernel[0] + kernel[3] + kernel[6]) / 3.0;
-        // blurred[4] = (kernel[1] + kernel[4] + kernel[7]) / 3.0;
-        // blurred[5] = (kernel[2] + kernel[5] + kernel[8]) / 3.0;
-        // blurred[6] = (kernel[3] + kernel[6] + kernel[7]) / 3.0;
-        // blurred[7] = (kernel[6] + kernel[7] + kernel[8]) / 3.0;
-        // blurred[8] = (kernel[5] + kernel[7] + kernel[8]) / 3.0;
-        
-        // // Calculate Sobel edges using the blurred values
-        // let sobel_edge_h = blurred[2] + (2.0 * blurred[5]) + blurred[8] - 
-        //                    (blurred[0] + (2.0 * blurred[3]) + blurred[6]);
-        // let sobel_edge_v = blurred[0] + (2.0 * blurred[1]) + blurred[2] - 
-        //                    (blurred[6] + (2.0 * blurred[7]) + blurred[8]);
-        
-        // let sobel = sqrt((sobel_edge_h * sobel_edge_h) + (sobel_edge_v * sobel_edge_v));
-        
-        // let luminance = dot(sobel.rgb, vec3<f32>(0.2125, 0.7154, 0.0721));
-        // let contrast = pow(luminance, 1.1);
-        // let alpha = smoothstep(0.25, 0.3, luminance);
 
         let minEdge = 0.002;
         let maxEdge = 0.004;
