@@ -13,8 +13,6 @@ import {
     Scene, 
     Vector3, 
     VideoTexture } from "kansei";
-import { initializeFramesPropagationPipeline } from "../utils";
-import { FramesTexture } from "../utils/FramesTexture";
 
 // Get reference to the container where our WebGPU canvas will be mounted
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -89,7 +87,6 @@ buttonWebcam!.addEventListener("click", clickHandler);
 
 // Create video texture to use in WebGPU
 const videoTexture: VideoTexture = new VideoTexture(video);
-const framesTexture: FramesTexture = new FramesTexture(video);
 
 // Define material with WGSL shader code
 const material: Material = new Material(/* wgsl */`
@@ -105,7 +102,7 @@ const material: Material = new Material(/* wgsl */`
     // Bind global uniforms and textures
     // Group 0: Per-material uniforms
     @group(0) @binding(0) var<uniform> time:f32;              // Global animation time
-    @group(0) @binding(1) var videoTexture:texture_2d<f32>;   // Webcam video feed
+    @group(0) @binding(1) var videoTexture:texture_external;   // Webcam video feed
     @group(0) @binding(2) var texSampler:sampler;             // Texture sampling config
 
     // Group 1 & 2: Transform matrices
@@ -144,7 +141,7 @@ const material: Material = new Material(/* wgsl */`
     fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     {   
         var uvFlipY = vec2<f32>(fragData.uv.x, 1.0 - fragData.uv.y);
-        var videoColor = textureSample(videoTexture, texSampler, uvFlipY);
+        var videoColor = textureSampleBaseClampToEdge(videoTexture, texSampler, uvFlipY);
 
         let minEdge = 0.002;
         let maxEdge = 0.004;
@@ -177,7 +174,7 @@ const material: Material = new Material(/* wgsl */`
             {
                 binding: 1,
                 visibility: GPUShaderStage.FRAGMENT,
-                value: framesTexture,
+                value: videoTexture,
             },
             {
                 binding: 2,
