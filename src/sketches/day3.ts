@@ -16,7 +16,7 @@ const animate = () => {
         agents.forEach((other) => {
             if (agent === other) return;
             const distance = Math.sqrt((agent.pos.x - other.pos.x) ** 2 + (agent.pos.y - other.pos.y) ** 2);
-            if (distance < 100) { // Vision radius
+            if (distance < 50) { // Vision radius
                 avgVel = addVectors(avgVel, other.vel);
                 center = addVectors(center, other.pos);
                 if (distance < 25) separate = addVectors(separate, vector((agent.pos.x - other.pos.x) / distance,(agent.pos.y - other.pos.y) / distance));
@@ -33,8 +33,8 @@ const animate = () => {
         const speed = Math.sqrt(agent.vel.x ** 2 + agent.vel.y ** 2);
         if (speed > 5) agent.vel = vector((agent.vel.x / speed) * 5, (agent.vel.y / speed) * 5);
         agent.pos = addVectors(agent.pos, agent.vel);
-        agent.pos.x = (agent.pos.x + width) % width;
-        agent.pos.y = (agent.pos.y + height) % height;
+        if (agent.pos.x > width || agent.pos.x < 0) agent.vel.x = -agent.vel.x;
+        if (agent.pos.y > height || agent.pos.y < 0) agent.vel.y = -agent.vel.y;
         ctx.fillStyle = 'white';
         ctx.fillRect(agent.pos.x, agent.pos.y, 6, 6);
     });
