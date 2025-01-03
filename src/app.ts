@@ -9,8 +9,8 @@ interface Challenge {
 class GenuaryCalendar {
     private challenges: Challenge[] = [
         { day: 1, prompt: "Vertical or horizontal lines only", credit: "Stranger in the Q", completed: true, sketchUrl: "/sketches/day1.html" },
-        { day: 2, prompt: "Layers upon layers upon layers", credit: "Monokai", completed: false, sketchUrl: "/sketches/day2.html" },
-        { day: 3, prompt: "Exactly 42 lines of code", credit: "Roni Kaufman", completed: false, sketchUrl: "/sketches/day3.html" },
+        { day: 2, prompt: "Layers upon layers upon layers", credit: "Monokai", completed: true, sketchUrl: "/sketches/day2.html" },
+        { day: 3, prompt: "Exactly 42 lines of code", credit: "Roni Kaufman", completed: true, sketchUrl: "/sketches/day3.html" },
         { day: 4, prompt: "Black on black", credit: "Stranger in the Q", completed: false, sketchUrl: "/sketches/day4.html" },
         { day: 5, prompt: "Isometric Art - (No vanishing points)", credit: "P1xelboy", completed: false, sketchUrl: "/sketches/day5.html" },
         { day: 6, prompt: "Make a landscape using only primitive shapes", credit: "Jonathan Barbeau", completed: false, sketchUrl: "/sketches/day6.html" },
