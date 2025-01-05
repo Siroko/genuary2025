@@ -99,9 +99,10 @@ fn vertex_main(
     
     var distanceToMouse = distance(ndcMouse, ndc.xy);
     var zoom = 0.5;
-    var timeScale = 0.3;
-    let _fbm = fbm(vec2<f32>(offsetVertex.x + time * timeScale + offsetVertex.z * 100.0, offsetVertex.y + time * timeScale) * zoom);
-    offsetVertex.z -= _fbm * 1.4;
+    var timeScale = 0.5;
+    let _fbm = (fbm(vec2<f32>(offsetVertex.x + time * timeScale + offsetVertex.y + offsetVertex.z * -100000.0, offsetVertex.y + offsetVertex.z * -100000.0 + time * timeScale) * zoom) - 0.5) * 2.0;
+    offsetVertex.z -= _fbm * 0.4;
+    offsetVertex.y += _fbm * 0.2;
     output.position = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
     output.normal = (worldMatrix * vec4<f32>(normal, 1.0)).xyz;
     output.real_uv = uv;
