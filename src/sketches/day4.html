@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genuary 2025 - Day 4</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #1a1a1a;
+            font-family: 'Arial', sans-serif;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        .info-container {
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            gap: 4px;
+        }
+        .info-container h1 {
+            margin-bottom: 3px;
+
+            font-size: 16px;
+            color: #ffffff;
+        }
+        .info-container p {
+            margin: 0;
+            font-size: 10px;
+            color: #ffffff;
+        }
+        .info-container p a {
+            text-decoration: none;
+            color: #ffffff;
+        }
+        .button-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        .button-container a {
+            text-decoration: none;
+        }
+        .button {
+            padding: 10px 10px;
+            background: #ffffff;
+            text-align: center;
+            color: #1a1a1a;
+            border-radius: 50px;
+            font-size: 15px;
+            width: 25px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .button-webcam {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 15px;
+            color: #000000;
+            cursor: pointer;
+            text-decoration: underline;
+            background-color: #ffffff;
+            padding: 20px 30px;
+            border-radius: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="info-container">
+            <h1>Day 4 — Glyphed.</h1>
+            <p>Prompt: "Black on black."</p>
+            <p>Source code: <a href="https://github.com/Siroko/genuary2025/blob/main/src/sketches/day4.ts" target="_blank"><u>day4.ts</u></a></p>
+            <p><a href="https://linktr.ee/felix.martinez" target="_blank">Social links: <u>Linktree</u></a></p>
+        </div>
+        <div class="button-container">
+            <a href="../index.html"><div class="button">⭠</div></a>
+            <!-- <div class="button audio-btn" onclick="toggleAudio()">♫</div> -->
+        </div>
+    </div>
+    <div id="canvas-container"></div>
+    <!-- <audio src="./rain.mp3" muted autoplay loop></audio> -->
+    <script type="module">
+        // import '../utils.ts';
+        import './day4.ts';
+    </script>
+</body>
+</html> 

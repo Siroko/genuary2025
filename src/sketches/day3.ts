@@ -16,7 +16,7 @@ const animate = () => {
         agents.forEach((other) => {
             if (agent === other) return;
             const distance = Math.sqrt((agent.pos.x - other.pos.x) ** 2 + (agent.pos.y - other.pos.y) ** 2);
-            if (distance < 50) { // Vision radius
+            if (distance < 25) { // Vision radius
                 avgVel = addVectors(avgVel, other.vel);
                 center = addVectors(center, other.pos);
                 if (distance < 25) separate = addVectors(separate, vector((agent.pos.x - other.pos.x) / distance,(agent.pos.y - other.pos.y) / distance));
