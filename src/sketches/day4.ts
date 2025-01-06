@@ -95,7 +95,7 @@ fn vertex_main(
     var offsetVertex: vec4<f32> = vec4<f32>(boundedPosition.xyz + a_particlePos.xyz, 1.0);
     offsetVertex.z += 1.2;
 
-    output.viewPosition = rotationMatrix * worldMatrix * offsetVertex;
+    output.viewPosition = worldMatrix * rotationMatrix * offsetVertex;
     output.worldPosition = worldPosition;
     output.position = projectionMatrix * viewMatrix * rotationMatrix * worldMatrix * offsetVertex;
     output.normal = (worldMatrix * vec4<f32>(normal, 1.0)).xyz;
@@ -138,7 +138,7 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     var sd: f32 = median(mapColor.r, mapColor.g, mapColor.b);
     let screenPxDistance: f32 = screenPxRange(uv) * (sd - 0.5);
     var opacity: f32 = clamp(screenPxDistance + 0.5, 0.0, 1.0);
-    opacity *= fragData.viewPosition.z;
+    opacity *= -fragData.viewPosition.z;
     var c = 0.1 - abs(fragData.worldPosition.z) / 5.0;
     // c *= 0.4;
     // c = 1.0;
