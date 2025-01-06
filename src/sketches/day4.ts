@@ -3,8 +3,7 @@ import {
     Camera, 
     CameraControls, 
     Float, 
-    FontLoader, 
-    InstancedGeometry, 
+    FontLoader,
     Material, 
     MouseVectors, 
     PlaneGeometry, 
@@ -24,7 +23,7 @@ const canvasContainer: HTMLElement | null = document.getElementById('canvas-cont
 // Parameters: FOV (degrees), near plane, far plane, aspect ratio
 const camera: Camera = new Camera(45, 0.1, 10000, window.innerWidth / window.innerHeight);
 
-const cameraControls = new CameraControls(camera, new Vector3(0, 0, -1), canvasContainer!, 2.5);
+const cameraControls = new CameraControls(camera, new Vector3(0, 0, -1), canvasContainer!, 3.5);
 
 // Create WebGPU renderer with configuration
 const renderer: Renderer = new Renderer({
@@ -38,14 +37,10 @@ const renderer: Renderer = new Renderer({
 // Initialize mouse tracking for interaction
 // This will track mouse position and movement
 const mouseVectors: MouseVectors = new MouseVectors(canvasContainer!);
-mouseVectors.speed = 1;
 const mouseStrength = new Float(mouseVectors.mouseStrength);
 
 // Create main scene to hold our 3D objects
 const scene: Scene = new Scene();
-
-// Configure texture sampling for the video texture
-const sampler = new Sampler('linear', 'linear', 'repeat');
 
 // Create a float uniform for time-based animations
 const time = new Float(0);
@@ -57,7 +52,7 @@ struct VertexOut {
     @location(1) normal : vec3<f32>,
     @location(2) uv : vec2<f32>,
     @location(3) viewPosition : vec4<f32>,
-    @location(4) real_uv: vec2<f32>
+    @location(4) worldPosition : vec4<f32>,
 };
 
 @group(0) @binding(0) var map : texture_2d<f32>;
@@ -74,6 +69,7 @@ struct VertexOut {
 
 @vertex
 fn vertex_main(
+    @builtin(instance_index) instanceID: u32,
     @location(0) position: vec4<f32>,
     @location(1) normal : vec3<f32>,
     @location(2) uv : vec2<f32>,
@@ -85,34 +81,49 @@ fn vertex_main(
 {
     var output : VertexOut;
     
-    let boundedPosition = vec3<f32>(
+    let worldPosition = worldMatrix * position;
+
+    var boundedPosition = vec3<f32>(
         mix(a_planeBounds.x, a_planeBounds.z, uv.x),
         mix(a_planeBounds.y, a_planeBounds.w, uv.y),
         position.z
     );
-    var offsetVertex: vec4<f32> = vec4<f32>(boundedPosition.xyz + a_particlePos.xyz, 1.0);
-
-    var projected = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
-    var ndc = projected.xyz / projected.w; 
-    var ndcMouse = mousePosition;
-    ndcMouse.y *= -1.0;
     
-    var distanceToMouse = distance(ndcMouse, ndc.xy);
-    var zoom = 0.5;
-    var timeScale = 0.5;
-    let _fbm = (fbm(vec2<f32>(offsetVertex.x + time * timeScale + offsetVertex.y + offsetVertex.z * -100000.0, offsetVertex.y + offsetVertex.z * -100000.0 + time * timeScale) * zoom) - 0.5) * 2.0;
-    offsetVertex.z -= _fbm * 0.4;
-    offsetVertex.y += _fbm * 0.2;
-    output.position = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
+    let instanceAngle = -f32(instanceID) * 0.3 + time * 2.0 + (worldPosition.z * 50.0);  // Different rotation per instance
+    let rotationMatrix = createRotationMatrix(vec3<f32>(1.0, 0.0, 0.0), instanceAngle);
+    
+    var offsetVertex: vec4<f32> = vec4<f32>(boundedPosition.xyz + a_particlePos.xyz, 1.0);
+    offsetVertex.z += 1.2;
+
+    output.viewPosition = rotationMatrix * worldMatrix * offsetVertex;
+    output.worldPosition = worldPosition;
+    output.position = projectionMatrix * viewMatrix * rotationMatrix * worldMatrix * offsetVertex;
     output.normal = (worldMatrix * vec4<f32>(normal, 1.0)).xyz;
-    output.real_uv = uv;
     output.uv = vec2<f32>(
         mapValue(uv.x, 0.0, 1.0, a_imageBounds.x, a_imageBounds.z), 
         mapValue(uv.y, 0.0, 1.0, a_imageBounds.y, a_imageBounds.w)
     );
-    output.viewPosition = worldMatrix * position;
     return output;
 } 
+
+fn createRotationMatrix(axis: vec3<f32>, angle: f32) -> mat4x4<f32> {
+    // Normalize the axis
+    let norm = sqrt(axis.x * axis.x + axis.y * axis.y + axis.z * axis.z);
+    let x = axis.x / norm;
+    let y = axis.y / norm;
+    let z = axis.z / norm;
+
+    let cos = cos(angle);
+    let sin = sin(angle);
+    let t = 1.0 - cos;
+
+    return mat4x4<f32>(
+        vec4<f32>(x * x * t + cos,      x * y * t - z * sin,  x * z * t + y * sin,  0.0),
+        vec4<f32>(y * x * t + z * sin,  y * y * t + cos,      y * z * t - x * sin,  0.0),
+        vec4<f32>(z * x * t - y * sin,  z * y * t + x * sin,  z * z * t + cos,      0.0),
+        vec4<f32>(0.0,                  0.0,                   0.0,                   1.0)
+    );
+}
 
 fn mapValue(x: f32, in_min: f32, in_max: f32, out_min: f32, out_max: f32) -> f32
 {
@@ -126,9 +137,11 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     var mapColor: vec4<f32> = textureSample(map, samp, uv);
     var sd: f32 = median(mapColor.r, mapColor.g, mapColor.b);
     let screenPxDistance: f32 = screenPxRange(uv) * (sd - 0.5);
-    let opacity: f32 = clamp(screenPxDistance + 0.5, 0.0, 1.0);
-
-    let c = 0.1 - abs(fragData.viewPosition.z) / 5.0;
+    var opacity: f32 = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+    opacity *= fragData.viewPosition.z;
+    var c = 0.1 - abs(fragData.worldPosition.z) / 5.0;
+    // c *= 0.4;
+    // c = 1.0;
     var glyphColor: vec4<f32> = vec4<f32>(c, c, c, 1.0);
     
     var bgColor: vec4<f32> = vec4<f32>(glyphColor.rgb, 0.0);
@@ -200,13 +213,14 @@ const init = async () => {
           }
         ],
         transparent: true
-      });
-
-      for (let i = 0; i < 100; i++) {
-        const mesh = new Renderable(geometry, material);
-        mesh.position.z = i * -0.005;
-        scene.add(mesh);
       }
+    );
+
+    for (let i = 0; i < 16; i++) {
+      const mesh = new Renderable(geometry, material);
+      mesh.position.z = i * -0.025;
+      scene.add(mesh);
+    }
 
     // Start animation loop
     animate();
