@@ -16,6 +16,7 @@ export default defineConfig({
   ],
   build: {
     outDir: '../dist',
+    publicDir: './src/public',
     emptyOutDir: true,
     rollupOptions: {
       input: htmlFiles,
@@ -28,6 +29,7 @@ export default defineConfig({
         },
         chunkFileNames: '[name].js',
         assetFileNames: (assetInfo) => {
+          console.log(assetInfo);
           // Keep assets in their original directories
           const info = assetInfo.name.split('.');
           const extType = info[info.length - 1];
@@ -45,5 +47,5 @@ export default defineConfig({
   },
   resolve: {
     extensions: ['.ts', '.js']
-  }
+  },
 }); 

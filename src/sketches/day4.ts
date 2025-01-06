@@ -21,9 +21,9 @@ const canvasContainer: HTMLElement | null = document.getElementById('canvas-cont
 
 // Initialize camera with perspective projection
 // Parameters: FOV (degrees), near plane, far plane, aspect ratio
-const camera: Camera = new Camera(45, 0.1, 10000, window.innerWidth / window.innerHeight);
+const camera: Camera = new Camera(45, 0.1, 100, window.innerWidth / window.innerHeight);
 
-const cameraControls = new CameraControls(camera, new Vector3(0, 0, -1), canvasContainer!, 3.5);
+const cameraControls = new CameraControls(camera, new Vector3(0, 0, 0), canvasContainer!, 4.5);
 
 // Create WebGPU renderer with configuration
 const renderer: Renderer = new Renderer({
@@ -53,6 +53,7 @@ struct VertexOut {
     @location(2) uv : vec2<f32>,
     @location(3) viewPosition : vec4<f32>,
     @location(4) worldPosition : vec4<f32>,
+    @location(5) brightness : f32,
 };
 
 @group(0) @binding(0) var map : texture_2d<f32>;
@@ -89,13 +90,16 @@ fn vertex_main(
         position.z
     );
     
-    let instanceAngle = -f32(instanceID) * 0.3 + time * 2.0 + (worldPosition.z * 50.0);  // Different rotation per instance
+    let instance = f32(instanceID);
+    let instanceAngle = -instance * 0.3 + time * 2.0 + (worldPosition.z * 50.0);  // Different rotation per instance
     let rotationMatrix = createRotationMatrix(vec3<f32>(1.0, 0.0, 0.0), instanceAngle);
     
+    let noise = fbm(vec2<f32>( instance + time, instance));
+    output.brightness = (step(0.5, noise) + 1.0);
     var offsetVertex: vec4<f32> = vec4<f32>(boundedPosition.xyz + a_particlePos.xyz, 1.0);
-    offsetVertex.z += 1.2;
+    offsetVertex.z += (1.0 + ((sin(time) + 1.0) * 0.5)) * 0.7;
 
-    output.viewPosition = worldMatrix * rotationMatrix * offsetVertex;
+    output.viewPosition = viewMatrix * worldMatrix * rotationMatrix * offsetVertex;
     output.worldPosition = worldPosition;
     output.position = projectionMatrix * viewMatrix * rotationMatrix * worldMatrix * offsetVertex;
     output.normal = (worldMatrix * vec4<f32>(normal, 1.0)).xyz;
@@ -140,6 +144,7 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     var opacity: f32 = clamp(screenPxDistance + 0.5, 0.0, 1.0);
     opacity *= -fragData.viewPosition.z;
     var c = 0.1 - abs(fragData.worldPosition.z) / 5.0;
+    c *= fragData.brightness;
     // c *= 0.4;
     // c = 1.0;
     var glyphColor: vec4<f32> = vec4<f32>(c, c, c, 1.0);
@@ -147,6 +152,9 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     var bgColor: vec4<f32> = vec4<f32>(glyphColor.rgb, 0.0);
     var fgColor: vec4<f32> = vec4<f32>(glyphColor.rgb, opacity);
     var color: vec4<f32> = mix(bgColor, fgColor, opacity);
+    if(opacity < 0.01){
+      discard;
+    }
     
     return color;
 } 
@@ -173,7 +181,7 @@ const init = async () => {
     window.addEventListener('resize', resize);
 
     const fontLoader = new FontLoader();
-    const fontInfo = await fontLoader.load('./font.arfont');
+    const fontInfo = await fontLoader.load('/font.arfont');
 
     const geometry = new TextGeometryCustom({
         text: "BLACK",
@@ -212,7 +220,6 @@ const init = async () => {
             value: time
           }
         ],
-        transparent: true
       }
     );
 
