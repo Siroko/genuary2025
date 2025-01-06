@@ -23,9 +23,9 @@ const canvasContainer: HTMLElement | null = document.getElementById('canvas-cont
 
 // Initialize camera with perspective projection
 // Parameters: FOV (degrees), near plane, far plane, aspect ratio
-const camera: Camera = new Camera(0.9, 0.1, 1000000, window.innerWidth / window.innerHeight);
+const camera: Camera = new Camera(0.05, 500, 30000, window.innerWidth / window.innerHeight);
 
-const cameraControls = new CameraControls(camera, new Vector3(0, 50, 0), canvasContainer!, 100.5);
+const cameraControls = new CameraControls(camera, new Vector3(0, 60, 0), canvasContainer!, 10000.5);
 
 // Create WebGPU renderer with configuration
 const renderer: Renderer = new Renderer({
@@ -46,7 +46,7 @@ const scene: Scene = new Scene();
 
 // Create a float uniform for time-based animations
 const time = new Float(0);
-const numRows = "64.0";
+const numRows = "2048.0";
 const shaderCode = /* wgsl */`
 #include <fbm>
 struct VertexOut {
@@ -54,7 +54,8 @@ struct VertexOut {
     @location(1) normal : vec3<f32>,
     @location(2) uv : vec2<f32>,
     @location(3) viewPosition : vec4<f32>,
-    @location(4) worldPosition : vec4<f32>
+    @location(4) worldPosition : vec4<f32>,
+    @location(5) fakeAO : f32
 };
 
 @group(0) @binding(0) var<uniform> mousePosition: vec2<f32>;
@@ -83,7 +84,12 @@ fn vertex_main(
     let posGridX = (instance % rows) - rows * 0.5;
     let posGridY = (instance / rows) - rows * 0.5;
     let noiseZoom = vec2<f32>(0.01);
-    let noise = fbm((vec2<f32>(posGridX, posGridY) + vec2<f32>(1024.0 + time * 2.0)) * noiseZoom);
+    let noise = fbm((vec2<f32>(posGridX, posGridY) + vec2<f32>(1024.0 + 2.0)) * noiseZoom);
+    if(position.y > 0.0) {
+      output.fakeAO = 1.0;
+    } else {
+      output.fakeAO = -2.0;
+    }
     var pos = position;
     pos.y *= 10.0;
     pos.y += noise * 100.0;
@@ -91,7 +97,7 @@ fn vertex_main(
     var offsetVertex: vec4<f32> = pos + vec4<f32>(posGridX, 0.0, posGridY, 0.0);
 
     output.viewPosition = viewMatrix * worldMatrix * offsetVertex;
-    output.worldPosition = worldPosition;
+    output.worldPosition = worldMatrix * offsetVertex;
     output.position = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
     output.normal = (worldMatrix * vec4<f32>(normal, 1.0)).xyz;
     output.uv = uv;
@@ -103,8 +109,10 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
 {
     var uv: vec2<f32> = fragData.uv;
 
+    let fakeAO = fragData.fakeAO;
     let light = normalize(vec3<f32>(100.0, 100.0, 10.0));
-    let lightDir = (dot(fragData.normal, light) + 1.3) * 0.5;
+    var lightDir = (dot(fragData.normal, light) + 1.3) * 0.5;
+    lightDir *= fakeAO;
     var color: vec4<f32> = vec4<f32>(0.67 * lightDir, 0.8 * lightDir, 0.7 * lightDir, 1.0);
     // color.rgb *= vec3<f32>(lightDir);
    
