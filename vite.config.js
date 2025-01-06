@@ -31,7 +31,7 @@ export default defineConfig({
           // Keep assets in their original directories
           const info = assetInfo.name.split('.');
           const extType = info[info.length - 1];
-          if (/\.(mp3|mp4|webm|ogg|wav|jpg|png|gif|svg|webp)$/i.test(assetInfo.name)) {
+          if (/\.(mp3|mp4|webm|ogg|wav|jpg|png|gif|svg|webp|arfont)$/i.test(assetInfo.name)) {
             return `assets/[name][extname]`;
           }
           return '[name][extname]';
