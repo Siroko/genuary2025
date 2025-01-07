@@ -1,5 +1,4 @@
 (() => {
-  // Get reference to the container where our WebGPU canvas will be mounted
   const textContainer: HTMLElement | null = document.getElementById('text-container');
   textContainer!.style.fontFamily = "monospace";
   textContainer!.style.fontSize = "10px";
