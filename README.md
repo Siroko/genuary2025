@@ -53,10 +53,10 @@ This project uses:
 | 1 | [Vertical or horizontal lines only](https://genuary25.felixmartinez.dev/sketches/day1.html) | Stranger in the Q | ✅ |
 | 2 | [Layers upon layers upon layers](https://genuary25.felixmartinez.dev/sketches/day2.html) | Monokai | ✅ |
 | 3 | [Exactly 42 lines of code](https://genuary25.felixmartinez.dev/sketches/day3.html) | Roni Kaufman | ✅ |
-| 4 | [Black on black](https://genuary25.felixmartinez.dev/sketches/day4.html) | Stranger in the Q | ⏳ |
+| 4 | [Black on black](https://genuary25.felixmartinez.dev/sketches/day4.html) | Stranger in the Q | ✅ |
 | 5 | [Isometric Art - (No vanishing points)](https://genuary25.felixmartinez.dev/sketches/day5.html) | P1xelboy | 🚧 |
-| 6 | [Make a landscape using only primitive shapes](https://genuary25.felixmartinez.dev/sketches/day6.html) | Jonathan Barbeau | 🚧 |
-| 7 | [Use software that is not intended to create art or images](https://genuary25.felixmartinez.dev/sketches/day7.html) | Camille Roux | 🚧 |
+| 6 | [Make a landscape using only primitive shapes](https://genuary25.felixmartinez.dev/sketches/day6.html) | Jonathan Barbeau | ✅ |
+| 7 | [Use software that is not intended to create art or images](https://genuary25.felixmartinez.dev/sketches/day7.html) | Camille Roux | ✅ |
 | 8 | [Draw one million of something](https://genuary25.felixmartinez.dev/sketches/day8.html) | Piter Pasma | 🚧 |
 | 9 | [The textile design patterns of public transport seating](https://genuary25.felixmartinez.dev/sketches/day9.html) | Piter Pasma | 🚧 |
 | 10 | [You can only use TAU in your code, no other number allowed](https://genuary25.felixmartinez.dev/sketches/day10.html) | Darien Brito | 🚧 |

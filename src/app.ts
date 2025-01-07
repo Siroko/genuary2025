@@ -14,7 +14,7 @@ class GenuaryCalendar {
         { day: 4, prompt: "Black on black", credit: "Stranger in the Q", completed: true, sketchUrl: "/sketches/day4.html" },
         { day: 5, prompt: "Isometric Art - (No vanishing points)", credit: "P1xelboy", completed: false, sketchUrl: "/sketches/day5.html" },
         { day: 6, prompt: "Make a landscape using only primitive shapes", credit: "Jonathan Barbeau", completed: true, sketchUrl: "/sketches/day6.html" },
-        { day: 7, prompt: "Use software that is not intended to create art or images", credit: "Camille Roux", completed: false, sketchUrl: "/sketches/day7.html" },
+        { day: 7, prompt: "Use software that is not intended to create art or images", credit: "Camille Roux", completed: true, sketchUrl: "/sketches/day7.html" },
         { day: 8, prompt: "Draw one million of something", credit: "Piter Pasma", completed: false, sketchUrl: "/sketches/day8.html" },
         { day: 9, prompt: "The textile design patterns of public transport seating", credit: "Piter Pasma", completed: false, sketchUrl: "/sketches/day9.html" },
         { day: 10, prompt: "You can only use TAU in your code, no other number allowed", credit: "Darien Brito", completed: false, sketchUrl: "/sketches/day10.html" },
