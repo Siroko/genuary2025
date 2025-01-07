@@ -1,22 +1,15 @@
 import { 
   BoxGeometry,
-    BufferBase, 
-    Camera, 
-    CameraControls, 
-    Float, 
-    FontLoader,
-    InstancedGeometry,
-    Material, 
-    MouseVectors, 
-    PlaneGeometry, 
-    Renderable, 
-    Renderer, 
-    Sampler, 
-    Scene, 
-    Vector3, 
-    Vector4 } from "kansei";
-import { TextGeometryCustom } from "../utils/TextGeometryCustom";
-import { FontInfo } from "kansei/dist/sdf/text/FontLoader";
+  Camera, 
+  CameraControls, 
+  Float,
+  InstancedGeometry,
+  Material, 
+  MouseVectors,
+  Renderable, 
+  Renderer,
+  Scene, 
+  Vector3 } from "kansei";
 
 // Get reference to the container where our WebGPU canvas will be mounted
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
