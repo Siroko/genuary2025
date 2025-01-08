@@ -26,7 +26,7 @@ const camera: Camera = new Camera(70, 1, 3000, window.innerWidth / window.innerH
 const cameraTarget = new Vector3(0, 90, 0);
 const cameraControls = new CameraControls(camera, cameraTarget, canvasContainer!, 250.5);
 const textureLoader = new TextureLoader();
-const bgColor = new Vector4(0.3, 0.1, 0.62, 1.0);
+const bgColor = new Vector4(0.8, 0.6, 0.2, 1.0);
 
 // Create WebGPU renderer with configuration
 const renderer: Renderer = new Renderer({
