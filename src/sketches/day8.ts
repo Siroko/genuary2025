@@ -182,7 +182,7 @@ const init = async () => {
     await renderer.initialize();
     canvasContainer?.appendChild(renderer.canvas);
 
-    const paletteImage = await textureLoader.load('./palette_grass.png');
+    const paletteImage = await textureLoader.load('/palette_grass.png');
     const palette = new Texture(paletteImage, false);
     const paletteSampler = new Sampler('nearest', 'nearest', 'repeat');
 
