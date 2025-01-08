@@ -260,7 +260,7 @@ const animate = () => {
     lastTime = currentTime;
     time.value += deltaTime;
 
-    cameraTarget.z -= 1.0;
+    cameraTarget.z -= 70.0 * deltaTime;
     // Update interaction systems
     cameraControls.update(deltaTime);
     mouseVectors.update(deltaTime);
