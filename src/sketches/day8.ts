@@ -9,8 +9,13 @@ import {
   PlaneGeometry,
   Renderable, 
   Renderer,
+  Sampler,
   Scene, 
-  Vector3 } from "kansei";
+  Texture, 
+  TextureLoader, 
+  Vector3,
+  Vector4
+ } from "kansei";
 
 // Get reference to the container where our WebGPU canvas will be mounted
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -20,14 +25,17 @@ const canvasContainer: HTMLElement | null = document.getElementById('canvas-cont
 const camera: Camera = new Camera(70, 1, 3000, window.innerWidth / window.innerHeight);
 const cameraTarget = new Vector3(0, 90, 0);
 const cameraControls = new CameraControls(camera, cameraTarget, canvasContainer!, 250.5);
+const textureLoader = new TextureLoader();
+const bgColor = new Vector4(0.3, 0.1, 0.62, 1.0);
 
 // Create WebGPU renderer with configuration
 const renderer: Renderer = new Renderer({
     width: window.innerWidth,
     height: window.innerHeight,
-    antialias: true,                               // Enable antialiasing for smoother edges
+    antialias: false,                               // Enable antialiasing for smoother edges
     devicePixelRatio: devicePixelRatio,            // Respect device's pixel density
-    sampleCount: 4,                                // MSAA sample count for antialiasing
+    sampleCount: 1,                                // MSAA sample count for antialiasing
+    clearColor: bgColor
 });
 
 // Initialize mouse tracking for interaction
@@ -40,7 +48,7 @@ const scene: Scene = new Scene();
 
 // Create a float uniform for time-based animations
 const time = new Float(0);
-const numRows = "2048.0";
+const numRows = "1024.0";
 const shaderCode = /* wgsl */`
 #include <fbm>
 struct VertexOut {
@@ -50,13 +58,20 @@ struct VertexOut {
     @location(3) viewPosition : vec4<f32>,
     @location(4) worldPosition : vec4<f32>,
     @location(5) fakeAO : f32,
-    @location(6) distanceToTarget : f32
+    @location(6) distanceToTarget : f32,
+    @location(7) whiteRand : f32
 };
 
 @group(0) @binding(0) var<uniform> mousePosition: vec2<f32>;
 @group(0) @binding(1) var<uniform> mouseStrength: f32;
-@group(0) @binding(2) var<uniform> time: f32;
-@group(0) @binding(3) var<uniform> cameraTarget: vec3<f32>;
+@group(0) @binding(2) var<uniform> mouseDirection: vec2<f32>;
+@group(0) @binding(3) var<uniform> time: f32;
+@group(0) @binding(4) var<uniform> cameraTarget: vec3<f32>;
+@group(0) @binding(5) var<uniform> inverseViewMatrix: mat4x4<f32>;
+@group(0) @binding(6) var palette: texture_2d<f32>;
+@group(0) @binding(7) var paletteSampler: sampler;
+@group(0) @binding(8) var<uniform> fogColor: vec4<f32>;
+
 @group(1) @binding(0) var<uniform> normalMatrix:mat4x4<f32>;
 @group(1) @binding(1) var<uniform> worldMatrix:mat4x4<f32>;
 
@@ -89,16 +104,41 @@ fn vertex_main(
     } else {
       output.fakeAO = -2.0;
     }
-    let whiteRand = rand(vec2<f32>(positionBox.x, positionBox.z));
+    let whiteRand = rand(vec2<f32>(positionBox.xz));
     var pos = position;
-    pos.y *= (1.0 + whiteRand) * 30.0;
-    // pos.x *= ((1.0) - (position.y + 0.5));
-    pos.y += noise * 200.0;
+    if(pos.y > 0.0) {
+      pos.x *= 0.5;
+      pos.x += sin(time + positionBox.z * 10.0) * 3.0;
+    }
+    pos.y *= (1.0 + whiteRand) * 20.0;
+    pos.y += whiteRand + noise * 200.0;
     
-    var offsetVertex: vec4<f32> = pos + positionBox;
+    output.whiteRand = 1.0 - whiteRand;
 
+    var offsetVertex: vec4<f32> = pos + positionBox;
+    
     let distanceToTarget = distance(offsetVertex.xyz, cameraTarget.xyz);
     output.distanceToTarget = distanceToTarget;
+
+    var projected = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
+    var ndc = projected.xyz / projected.w; 
+    var ndcMouse = mousePosition;
+    ndcMouse.y *= -1.0;
+    var distanceToMouse = distance(ndcMouse, ndc.xy);
+
+    // if(distanceToMouse < mouseStrength * 3.0 && mouseStrength > 0.01) {
+    //     var nDistance = distanceToMouse / (mouseStrength * 2.0);
+    //     var displaceMentVector = vec2<f32>(
+    //         mouseDirection.x * mouseStrength * 300.0 * (1.0 - nDistance) * -1.0, 
+    //         mouseDirection.y * mouseStrength * 300.0 * (1.0 - nDistance)
+    //     );
+    //     // Assuming you have a modelMatrix defined
+    //     var worldDisplacementVector = (inverseViewMatrix * vec4<f32>(displaceMentVector, 0.0, 0.0)).xyz;
+    //     if(pos.y > 0.0) { 
+    //       offsetVertex = offsetVertex + vec4<f32>(worldDisplacementVector, 0.0);
+    //     }
+    // }
+
 
     output.viewPosition = viewMatrix * worldMatrix * offsetVertex;
     output.worldPosition = worldMatrix * offsetVertex;
@@ -108,18 +148,30 @@ fn vertex_main(
     return output;
 } 
 
+fn mapValue(x: f32, in_min: f32, in_max: f32, out_min: f32, out_max: f32) -> f32
+{
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
 @fragment
 fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
 {
     var uv: vec2<f32> = fragData.uv;
+    let paletteColor = textureSample(palette, paletteSampler, vec2<f32>(fragData.whiteRand, 0.0));
 
+    let fogFactor = smoothstep(0.4, 0.9,mapValue(
+      min(-fragData.viewPosition.z / 512.0, 1.8),
+      0.0, 1.8,
+      0.0, 1.0
+    ));
     let fakeAO = fragData.fakeAO;
     let light = normalize(vec3<f32>(100.0, 100.0, 10.0));
     var lightDir = (dot(fragData.normal, light) + 1.3) * 0.5;
     lightDir *= fakeAO;
-    let fog = 1.0 - clamp(fragData.distanceToTarget / 1024.0, 0.0, 1.0);
-    lightDir *= fog;
-    var color: vec4<f32> = vec4<f32>(1.0 * lightDir, 1.0 * lightDir, 1.0 * lightDir, 1.0);
+   
+    var color: vec4<f32> = vec4<f32>(paletteColor);
+    color *= vec4<f32>(lightDir, lightDir, lightDir, 1.0);
+    color = mix(color, fogColor, fogFactor);
    
     return color;
 } 
@@ -129,6 +181,10 @@ const init = async () => {
     // Setup WebGPU context
     await renderer.initialize();
     canvasContainer?.appendChild(renderer.canvas);
+
+    const paletteImage = await textureLoader.load('./palette_grass.png');
+    const palette = new Texture(paletteImage, false);
+    const paletteSampler = new Sampler('nearest', 'nearest', 'repeat');
 
     // Handle window resizing
     window.addEventListener('resize', resize);
@@ -149,12 +205,37 @@ const init = async () => {
         {
           binding: 2,
           visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
-          value: time
+          value: mouseVectors.mouseDirection
         },
         {
           binding: 3,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          value: time
+        },
+        {
+          binding: 4,
           visibility: GPUShaderStage.VERTEX,
           value: cameraTarget
+        },
+        {
+          binding: 5,
+          visibility: GPUShaderStage.VERTEX,
+          value: camera.inverseViewMatrix
+        },
+        {
+          binding: 6,
+          visibility: GPUShaderStage.FRAGMENT,
+          value: palette
+        },
+        {
+          binding: 7,
+          visibility: GPUShaderStage.FRAGMENT,
+          value: paletteSampler
+        },
+        {
+          binding: 8,
+          visibility: GPUShaderStage.FRAGMENT,
+          value: bgColor
         }
       ],
       cullMode: 'none'
