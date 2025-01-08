@@ -32,9 +32,9 @@ const bgColor = new Vector4(0.8, 0.6, 0.2, 1.0);
 const renderer: Renderer = new Renderer({
     width: window.innerWidth,
     height: window.innerHeight,
-    antialias: false,                               // Enable antialiasing for smoother edges
+    antialias: true,                               // Enable antialiasing for smoother edges
     devicePixelRatio: devicePixelRatio,            // Respect device's pixel density
-    sampleCount: 1,                                // MSAA sample count for antialiasing
+    sampleCount: 4,                                // MSAA sample count for antialiasing
     clearColor: bgColor
 });
 
@@ -99,47 +99,18 @@ fn vertex_main(
     let noiseZoom = vec2<f32>(0.005);
     var noise = fbm((vec2<f32>(positionBox.x, positionBox.z) + vec2<f32>(1024.0 + 2.0)) * noiseZoom);
 
-    if(position.y > 0.0) {
-      output.fakeAO = 1.0;
-    } else {
-      output.fakeAO = -2.0;
-    }
     let whiteRand = rand(vec2<f32>(positionBox.xz));
     var pos = position;
-    if(pos.y > 0.0) {
-      pos.x *= 0.5;
-      pos.x += sin(time + positionBox.z * 10.0) * 3.0;
-    }
+    
+    pos.x *= 1.2 - uv.y;
+    pos.x += (sin(0.3 * time + positionBox.z * 10.0) * 3.0) * smoothstep(0.3, 1.0, uv.y);
+
     pos.y *= (1.0 + whiteRand) * 20.0;
     pos.y += whiteRand + noise * 200.0;
-    
-    output.whiteRand = 1.0 - whiteRand;
 
     var offsetVertex: vec4<f32> = pos + positionBox;
-    
-    let distanceToTarget = distance(offsetVertex.xyz, cameraTarget.xyz);
-    output.distanceToTarget = distanceToTarget;
 
-    var projected = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
-    var ndc = projected.xyz / projected.w; 
-    var ndcMouse = mousePosition;
-    ndcMouse.y *= -1.0;
-    var distanceToMouse = distance(ndcMouse, ndc.xy);
-
-    // if(distanceToMouse < mouseStrength * 3.0 && mouseStrength > 0.01) {
-    //     var nDistance = distanceToMouse / (mouseStrength * 2.0);
-    //     var displaceMentVector = vec2<f32>(
-    //         mouseDirection.x * mouseStrength * 300.0 * (1.0 - nDistance) * -1.0, 
-    //         mouseDirection.y * mouseStrength * 300.0 * (1.0 - nDistance)
-    //     );
-    //     // Assuming you have a modelMatrix defined
-    //     var worldDisplacementVector = (inverseViewMatrix * vec4<f32>(displaceMentVector, 0.0, 0.0)).xyz;
-    //     if(pos.y > 0.0) { 
-    //       offsetVertex = offsetVertex + vec4<f32>(worldDisplacementVector, 0.0);
-    //     }
-    // }
-
-
+    output.whiteRand = 1.0 - whiteRand;
     output.viewPosition = viewMatrix * worldMatrix * offsetVertex;
     output.worldPosition = worldMatrix * offsetVertex;
     output.position = projectionMatrix * viewMatrix * worldMatrix * offsetVertex;
@@ -164,7 +135,7 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
       0.0, 1.8,
       0.0, 1.0
     ));
-    let fakeAO = fragData.fakeAO;
+    let fakeAO = mapValue(smoothstep(0.7, 1.0, fragData.uv.y), 0.0, 1.0, 0.3, 1.0);
     let light = normalize(vec3<f32>(100.0, 100.0, 10.0));
     var lightDir = (dot(fragData.normal, light) + 1.3) * 0.5;
     lightDir *= fakeAO;
@@ -188,7 +159,7 @@ const init = async () => {
 
     // Handle window resizing
     window.addEventListener('resize', resize);
-    const geometry = new InstancedGeometry(new PlaneGeometry(1, 1, 1, 1), parseInt(numRows) * parseInt(numRows));
+    const geometry = new InstancedGeometry(new PlaneGeometry(1, 1, 1, 5), parseInt(numRows) * parseInt(numRows));
 
     const material = new Material(shaderCode, {
       bindings: [
