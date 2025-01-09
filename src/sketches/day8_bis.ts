@@ -159,7 +159,7 @@ const init = async () => {
 
     // Handle window resizing
     window.addEventListener('resize', resize);
-    const geometry = new InstancedGeometry(new PlaneGeometry(1, 1, 1, 1), parseInt(numRows) * parseInt(numRows));
+    const geometry = new InstancedGeometry(new PlaneGeometry(1, 1, 1, 5), parseInt(numRows) * parseInt(numRows));
 
     const material = new Material(shaderCode, {
       bindings: [
@@ -231,7 +231,7 @@ const animate = () => {
     lastTime = currentTime;
     time.value += deltaTime;
 
-    cameraTarget.z -= 70.0 * deltaTime;
+    // cameraTarget.z -= 70.0 * deltaTime;
     // Update interaction systems
     cameraControls.update(deltaTime);
     mouseVectors.update(deltaTime);
