@@ -15,6 +15,7 @@ import {
     VideoTexture } from "kansei";
 import { initializeFramesPropagationPipeline } from "../utils";
 import { FramesTexture } from "../utils/FramesTexture";
+import { CustomMaterial } from "../utils/CustomMaterial";
 
 // Get reference to the container where our WebGPU canvas will be mounted
 const canvasContainer: HTMLElement | null = document.getElementById('canvas-container');
@@ -89,10 +90,10 @@ buttonWebcam!.addEventListener("click", clickHandler);
 
 // Create video texture to use in WebGPU
 const videoTexture: VideoTexture = new VideoTexture(video);
-const framesTexture: FramesTexture = new FramesTexture(video);
+const framesTexture: FramesTexture = new FramesTexture(video, 30);
 
 // Define material with WGSL shader code
-const material: Material = new Material(/* wgsl */`
+const material: CustomMaterial = new CustomMaterial(/* wgsl */`
     // Vertex shader output structure defines data passed to fragment shader
     struct VertexOut {
         @builtin(position) position : vec4<f32>,    // Required: clip space position
@@ -143,12 +144,26 @@ const material: Material = new Material(/* wgsl */`
     @fragment
     fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
     {   
+        // Calculate which quadrant to sample from based on instance depth
+        let totalFrames = 64.0;
+        let colsRows = sqrt(totalFrames); // 8x8 grid
+        let instanceIndex = floor(f32(fragData.instancePosition.z + 9.0) / 0.3);
+        // Invert the frame index (63 - instanceIndex for 64 frames)
+        let frameIndex = totalFrames - 1.0 - instanceIndex;
+        let frameX = floor(frameIndex % colsRows);
+        let frameY = floor(frameIndex / colsRows);
+        
+        // Calculate UV coordinates within the atlas
         var uvFlipY = vec2<f32>(fragData.uv.x, 1.0 - fragData.uv.y);
-        var videoColor = textureSample(videoTexture, texSampler, uvFlipY);
+        let atlasUV = vec2<f32>(
+            (frameX + uvFlipY.x) / colsRows,
+            (frameY + uvFlipY.y) / colsRows
+        );
+        
+        var videoColor = textureSample(videoTexture, texSampler, atlasUV);
 
         let minEdge = 0.002;
         let maxEdge = 0.004;
-        // var n = getCurlVelocity(vec4<f32>(fragData.uv, fragData.instancePosition.z, 0.0));
         var edgeLX = smoothstep(minEdge, maxEdge, fragData.uv.x);
         var edgeRX = smoothstep(minEdge, maxEdge, 1.0 - fragData.uv.x);
         var edgeX = min(edgeLX, edgeRX);
@@ -158,13 +173,12 @@ const material: Material = new Material(/* wgsl */`
         var edge = 1.0 - min(edgeX, edgeY);
         let luminance = dot(videoColor.rgb, vec3<f32>(0.2125, 0.7154, 0.0721));
         
-        // Add brightness adjustment
-        let brightness = luminance + 0.1; // Increase by 0.2, adjust this value as needed
+        let brightness = luminance + 0.1;
         let contrast = pow(brightness, 1.9);
         
-        videoColor = vec4<f32>(vec3<f32>(contrast + edge), mix(0.2, 1.0, smoothstep(0.25, 0.3, edge)));
+        videoColor = vec4<f32>(vec3<f32>(contrast + edge), mix(1.0, 1.0, smoothstep(0.25, 0.3, edge)));
         
-        return videoColor;
+        return videoColor / (totalFrames * 0.5);
     }`,
     {
         // Configure material bindings for the shader
@@ -203,7 +217,7 @@ const init = async () => {
     canvasContainer?.appendChild(renderer.canvas);
     
     // Create renderable object from geometry and material
-    const layerRenderable: Renderable = new Renderable(layersInstanced, material);
+    const layerRenderable: Renderable = new Renderable(layersInstanced, (material as unknown as Material));
     scene.add(layerRenderable);
 
     // Handle window resizing
