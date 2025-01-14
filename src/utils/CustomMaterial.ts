@@ -111,13 +111,13 @@ class CustomMaterial {
                         blend: {
                             color: {
                                 operation: 'add',
-                                srcFactor: 'one',
-                                dstFactor: 'one'
+                                srcFactor: 'src-alpha',
+                                dstFactor: 'one-minus-src-alpha'
                             },
                             alpha: {
                                 operation: 'add',
                                 srcFactor: 'one',
-                                dstFactor: 'one'
+                                dstFactor: 'one-minus-src-alpha'
                             }
                         }
                     }
@@ -130,7 +130,7 @@ class CustomMaterial {
 
             depthStencil: {
                 depthWriteEnabled: this.transparent ? false : this.depthWriteEnabled,
-                depthCompare: this.depthCompare,
+                depthCompare: this.transparent ? 'always' : this.depthCompare,
                 format: this.depthStencilFormat,
             },
         }

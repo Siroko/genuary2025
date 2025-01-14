@@ -22,7 +22,7 @@ const canvasContainer: HTMLElement | null = document.getElementById('canvas-cont
 
 // Initialize camera with perspective projection
 // Parameters: FOV (degrees), near plane, far plane, aspect ratio
-const camera: Camera = new Camera(45, 0.1, 10000, window.innerWidth / window.innerHeight);
+const camera: Camera = new Camera(0.01, 100, 10000, window.innerWidth / window.innerHeight);
 
 // Create WebGPU renderer with configuration
 const renderer: Renderer = new Renderer({
@@ -45,7 +45,7 @@ const mouseVectors: MouseVectors = new MouseVectors(canvasContainer!);
 
 // Setup orbital camera controls
 // Allows user to rotate and zoom around a center point
-const cameraControls: CameraControls = new CameraControls(camera, new Vector3(0, 0, 0), canvasContainer!);
+const cameraControls: CameraControls = new CameraControls(camera, new Vector3(0, 0, 0), canvasContainer!, 2000);
 
 // Create main scene to hold our 3D objects
 const scene: Scene = new Scene();
@@ -90,7 +90,7 @@ buttonWebcam!.addEventListener("click", clickHandler);
 
 // Create video texture to use in WebGPU
 const videoTexture: VideoTexture = new VideoTexture(video);
-const framesTexture: FramesTexture = new FramesTexture(video, 30);
+const framesTexture: FramesTexture = new FramesTexture(video, 25);
 
 // Define material with WGSL shader code
 const material: CustomMaterial = new CustomMaterial(/* wgsl */`
@@ -128,7 +128,7 @@ const material: CustomMaterial = new CustomMaterial(/* wgsl */`
         var p = position;
         
         // Create depth effect by offsetting each instance along Z
-        p.z += (f32(instanceID) * 0.3) - 9.0;  // Spread instances in depth
+        p.z -= (f32(instanceID));  // Spread instances in depth
         
         output.instancePosition = p;
         // Transform to clip space through matrix chain
@@ -147,10 +147,11 @@ const material: CustomMaterial = new CustomMaterial(/* wgsl */`
         // Calculate which quadrant to sample from based on instance depth
         let totalFrames = 64.0;
         let colsRows = sqrt(totalFrames); // 8x8 grid
-        let instanceIndex = floor(f32(fragData.instancePosition.z + 9.0) / 0.3);
-        // Invert the frame index (63 - instanceIndex for 64 frames)
-        let frameIndex = totalFrames - 1.0 - instanceIndex;
-        let frameX = floor(frameIndex % colsRows);
+        // Calculate instance index from 0 to 63 based on Z position
+        let instanceIndex = floor(f32(fragData.instancePosition.z));
+        // Map directly to frame index (no need to invert since we want back-to-front)
+        let frameIndex = instanceIndex;
+        let frameX = floor(frameIndex %colsRows);
         let frameY = floor(frameIndex / colsRows);
         
         // Calculate UV coordinates within the atlas
@@ -162,7 +163,7 @@ const material: CustomMaterial = new CustomMaterial(/* wgsl */`
         
         var videoColor = textureSample(videoTexture, texSampler, atlasUV);
 
-        let minEdge = 0.002;
+        let minEdge = 0.0035;
         let maxEdge = 0.004;
         var edgeLX = smoothstep(minEdge, maxEdge, fragData.uv.x);
         var edgeRX = smoothstep(minEdge, maxEdge, 1.0 - fragData.uv.x);
@@ -176,9 +177,9 @@ const material: CustomMaterial = new CustomMaterial(/* wgsl */`
         let brightness = luminance + 0.1;
         let contrast = pow(brightness, 1.9);
         
-        videoColor = vec4<f32>(vec3<f32>(contrast + edge), mix(1.0, 1.0, smoothstep(0.25, 0.3, edge)));
-        
-        return videoColor / (totalFrames * 0.5);
+        videoColor = vec4<f32>(vec3<f32>(contrast + edge), mix(2.0 / totalFrames, 1.0, smoothstep(0.25, 0.3, edge)));
+        // videoColor.a = 4.0 / totalFrames;
+        return videoColor;
     }`,
     {
         // Configure material bindings for the shader
