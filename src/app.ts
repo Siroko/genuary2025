@@ -21,7 +21,7 @@ class GenuaryCalendar {
         { day: 10, prompt: "You can only use TAU in your code, no other number allowed", credit: "Darien Brito", completed: false, sketchUrl: "/sketches/day10.html" },
         { day: 11, prompt: "Impossible day - Try to do something that feels impossible for you to do", credit: "Rachel Ehrlich (Joy of Randomness) and the Recurse Center", completed: false, sketchUrl: "/sketches/day11.html" },
         { day: 12, prompt: "Subdivision", credit: "Melissa Wiederrecht", completed: false, sketchUrl: "/sketches/day12.html" },
-        { day: 13, prompt: "Triangles and nothing else", credit: "Heeey", completed: false, sketchUrl: "/sketches/day13.html" },
+        { day: 13, prompt: "Triangles and nothing else", credit: "Heeey", completed: true, sketchUrl: "/sketches/day13.html" },
         { day: 14, prompt: "Pure black and white. No gray", credit: "Melissa Wiederrecht", completed: false, sketchUrl: "/sketches/day14.html" },
         { day: 15, prompt: "Design a rug", credit: "Melissa Wiederrecht", completed: false, sketchUrl: "/sketches/day15.html" },
         { day: 16, prompt: "Generative palette", credit: "Stranger in the Q", completed: false, sketchUrl: "/sketches/day16.html" },
