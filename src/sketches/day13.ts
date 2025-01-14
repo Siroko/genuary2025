@@ -35,9 +35,9 @@ const bgColor = new Vector4(0.0, 0.0, 0.0, 1.0);
 const renderer: Renderer = new Renderer({
     width: window.innerWidth,
     height: window.innerHeight,
-    antialias: true,                               // Enable antialiasing for smoother edges
+    antialias: false,                               // Enable antialiasing for smoother edges
     devicePixelRatio: devicePixelRatio,            // Respect device's pixel density
-    sampleCount: 4,                                // MSAA sample count for antialiasing
+    sampleCount: 1,                                // MSAA sample count for antialiasing
     clearColor: bgColor
 });
 
@@ -52,7 +52,7 @@ const scene: Scene = new Scene();
 // Create a float uniform for time-based animations
 const time = new Float(0);
 const numRows = "1024.0";
-const shaderCode = /* wgsl */`
+const shaderCode = (isLines: boolean) => { return /* wgsl */`
 struct VertexOut {
     @builtin(position) position : vec4<f32>,
     @location(1) normal : vec3<f32>,
@@ -92,9 +92,10 @@ fn fragment_main(fragData: VertexOut) -> @location(0) vec4<f32>
 {
     var uv: vec2<f32> = fragData.uv;
    
-    return vec4<f32>(uv, 0.0, 1.0);
+    return ${isLines ? 'vec4<f32>(0.0, 0.0, 0.0, 1.0)' : 'vec4<f32>(uv, 0.0, 1.0)'};
 } 
-`;
+`};
+
 // Initialize the application
 const init = async () => {
     // Setup WebGPU context
@@ -108,9 +109,37 @@ const init = async () => {
       points[i] = (Math.random() - 0.5) * 300;
       points[i + 1] = (Math.random() - 0.5) * 100;
     }
-    const geometry = new DelaunayGeometry(points, 'lines');
+    const geometry = new DelaunayGeometry(points, 'triangles');
+    const geometryLines = new DelaunayGeometry(points, 'lines');
 
-    const material = new Material(shaderCode, {
+    const material = new Material(shaderCode(false), {
+      bindings: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          value: mouseVectors.mousePosition
+        },
+        {
+          binding: 1,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          value: mouseStrength
+        },
+        {
+          binding: 2,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          value: mouseVectors.mouseDirection
+        },
+        {
+          binding: 3,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          value: time
+        }
+      ],
+      cullMode: 'none',
+      topology: 'triangle-list'
+    });
+
+    const materialLines = new Material(shaderCode(true), {
       bindings: [
         {
           binding: 0,
@@ -139,6 +168,10 @@ const init = async () => {
 
     const mesh = new Renderable(geometry, material);
     scene.add(mesh);
+
+    const meshLines = new Renderable(geometryLines, materialLines);
+    meshLines.position.set(0, 0, 0.3);
+    scene.add(meshLines);
 
     // Start animation loop
     animate();
