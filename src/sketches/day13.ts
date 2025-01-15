@@ -1,12 +1,9 @@
 import { 
-  BoxGeometry,
   Camera, 
   CameraControls, 
   Float,
-  InstancedGeometry,
   Material, 
   MouseVectors,
-  PlaneGeometry,
   Renderable, 
   Renderer,
   Sampler,
@@ -14,7 +11,6 @@ import {
   Vector3,
   Vector4
  } from "kansei";
- import Delaunator from 'delaunator';
 import { DelaunayGeometry } from "../utils/DelaunayGeometry";
 import CanvasText from "../utils/CanvasText";
 import { TextureUpdateable } from "../utils/TextureUpdateable";
@@ -51,7 +47,6 @@ const scene: Scene = new Scene();
 
 // Create a float uniform for time-based animations
 const time = new Float(0);
-const numRows = "1024.0";
 const shaderCode = (isLines: boolean) => { return /* wgsl */`
 struct VertexOut {
     @builtin(position) position : vec4<f32>,
