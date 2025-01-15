@@ -252,7 +252,7 @@ const init = async () => {
     scene.add(mesh);
 
     const meshLines = new Renderable(geometryLines, (materialLines as unknown as Material));
-    meshLines.position.set(0, 0, 0.3);
+    meshLines.position.set(0, 0, 0.1);
     scene.add(meshLines);
 
     // Start animation loop
