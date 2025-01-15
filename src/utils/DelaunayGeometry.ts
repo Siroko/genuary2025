@@ -13,9 +13,25 @@ export class DelaunayGeometry extends Geometry {
 
     public vertexCount: number = 0;
 
-    constructor(points: Float32Array, mode: 'triangles' | 'lines' = 'triangles') {
+    constructor(
+        points: Float32Array, 
+        renderMode: 'triangles' | 'lines' = 'triangles',
+        pointSelection: 'hull' | 'all' = 'all'
+    ) {
         super();
 
+        this.update(points, renderMode, pointSelection);
+    }
+
+    public update(
+        points: Float32Array,
+        renderMode: 'triangles' | 'lines' = 'triangles',
+        pointSelection: 'hull' | 'all' = 'all'
+    ) {
+        // Clear the existing buffers
+        this._vertices = [];
+        this._indices = [];
+        
         // Calculate bounding box
         let minX = Infinity;
         let minY = Infinity;
@@ -46,22 +62,37 @@ export class DelaunayGeometry extends Geometry {
             this._vertices.push(u, v);
         }
 
-        // Convert triangles based on mode
-        if (mode === 'lines') {
-            // Use halfedges to get unique edges
-            const { triangles, halfedges } = delaunay;
-            for (let i = 0; i < triangles.length; i++) {
-                // Only add edge if this halfedge is the primary one
-                // (i.e., has a higher index than its pair or has no pair)
-                if (halfedges[i] === -1 || i < halfedges[i]) {
-                    const j = triangles[i];
-                    const k = triangles[i % 3 === 2 ? i - 2 : i + 1];
-                    this._indices.push(j, k);
-                }
+        // First determine which points to use
+        let trianglesToUse: Uint32Array;
+        if (pointSelection === 'hull') {
+            // Create triangles from hull points by making a fan from first point
+            const tempTriangles = [];
+            const hullPoints = delaunay.hull;
+            const firstPoint = hullPoints[0];
+            // Create triangles by connecting first point to each pair of consecutive hull points
+            for (let i = 1; i < hullPoints.length - 1; i++) {
+                tempTriangles.push(firstPoint, hullPoints[i], hullPoints[i + 1]);
             }
+            trianglesToUse = new Uint32Array(tempTriangles);
         } else {
-            // For triangles, just use the triangles directly
-            this._indices.push(...delaunay.triangles);
+            // Use all triangles directly
+            trianglesToUse = delaunay.triangles;
+        }
+
+        // Then apply the rendering mode
+        if (renderMode === 'lines') {
+            // Convert triangles to lines
+            const lineIndices = [];
+            for (let i = 0; i < trianglesToUse.length; i += 3) {
+                const a = trianglesToUse[i];
+                const b = trianglesToUse[(i + 1) % trianglesToUse.length];
+                const c = trianglesToUse[(i + 2) % trianglesToUse.length];
+                lineIndices.push(a, b, b, c, c, a);
+            }
+            this._indices = lineIndices;
+        } else {
+            // Use triangles directly
+            this._indices = Array.from(trianglesToUse);
         }
         
         // Pad indices array to ensure multiple of 4
@@ -73,6 +104,7 @@ export class DelaunayGeometry extends Geometry {
         
         this.vertices = new Float32Array(this._vertices);
         this.indices = new Uint16Array(this._indices);
-        
+
+        this.initialized = false;
     }
 }
