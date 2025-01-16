@@ -21,7 +21,7 @@ const canvasContainer: HTMLElement | null = document.getElementById('canvas-cont
 // Parameters: FOV (degrees), near plane, far plane, aspect ratio
 const camera: Camera = new Camera(70, 1, 3000, window.innerWidth / window.innerHeight);
 const cameraTarget = new Vector3(0, 5, 0);
-const cameraControls = new CameraControls(camera, cameraTarget, canvasContainer!, 250.5);
+const cameraControls = new CameraControls(camera, cameraTarget, canvasContainer!, 100.5);
 const bgColor = new Vector4(0.0, 0.0, 0.0, 1.0);
 
 
