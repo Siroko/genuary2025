@@ -8,6 +8,10 @@
             "value": "cross-origin"
           },
           {
+            "key": "Cross-Origin-Embedder-Policy",
+            "value": "require-corp"
+          },
+          {
             "key": "X-Frame-Options",
             "value": "ALLOW-FROM https://felixmartinez.dev"
           },
